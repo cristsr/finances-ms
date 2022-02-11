@@ -1,0 +1,4 @@
+ENV = local
+PORT = 3000
+DB_URI = mongo_uri
+SHOW_DOCS = true
