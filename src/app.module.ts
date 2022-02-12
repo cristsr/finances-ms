@@ -5,6 +5,7 @@ import { validate } from 'config/validator';
 import { AppController } from './app.controller';
 import { CategoryModule } from 'app/category/category.module';
 import { SharedModule } from 'app/shared/shared.module';
+import { MovementModule } from 'app/movement/movement.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SharedModule } from 'app/shared/shared.module';
     DatabaseModule,
     CategoryModule,
     SharedModule,
+    MovementModule,
   ],
   controllers: [AppController],
   providers: [],
