@@ -4,11 +4,19 @@ import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Category, CategoryDocument } from '../schemas/category.schema';
 import { Model } from 'mongoose';
+import {
+  Subcategory,
+  SubcategoryDocument,
+} from '../schemas/subcategory.schema';
 
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel(Category.name)
+    private categoryModel: Model<CategoryDocument>,
+
+    @InjectModel(Subcategory.name)
+    private subcategoryModel: Model<SubcategoryDocument>,
   ) {}
 
   create(createCategoryDto: CreateCategoryDto | CreateCategoryDto[]) {
@@ -29,5 +37,9 @@ export class CategoryService {
 
   remove(id: string) {
     return this.categoryModel.deleteOne({ id });
+  }
+
+  subcategories(id: string) {
+    return this.subcategoryModel.find({ category: id }).exec();
   }
 }

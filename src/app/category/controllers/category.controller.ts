@@ -12,13 +12,18 @@ import { CategoryService } from '../services/category.service';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CreateCategoryPipe } from '../pipes/create-category.pipe';
 import { CreateCategoryDto } from 'app/category/dto/create-category.dto';
+import { CreateSubcategoryDto } from 'app/category/dto/create-subcategory.dto';
+import { SubcategoryService } from 'app/category/services/subcategory.service';
 
 @Controller({
   path: 'categories',
   version: '1',
 })
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly subcategoryService: SubcategoryService,
+  ) {}
 
   @Post()
   create(
@@ -49,5 +54,21 @@ export class CategoryController {
   @Delete(':id')
   remove(@Param('id', MongoIdPipe) id: string) {
     return this.categoryService.remove(id);
+  }
+
+  @Post('/:id/subcategories')
+  createSubcategory(
+    @Param('id', MongoIdPipe) category: string,
+    @Body() createSubcategoryDto: CreateSubcategoryDto,
+  ) {
+    return this.subcategoryService.createByCategory(
+      category,
+      createSubcategoryDto,
+    );
+  }
+
+  @Get(':id/subcategories')
+  findSubcategories(@Param('id', MongoIdPipe) id: string) {
+    return this.subcategoryService.findByCategory(id);
   }
 }

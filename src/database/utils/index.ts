@@ -1,4 +1,6 @@
-export const DefaultSchemaConfig = {
+import { SchemaOptions } from '@nestjs/mongoose';
+
+export const DefaultSchemaConfig: SchemaOptions = {
   id: true,
   toJSON: {
     transform: (_, ret) => {
