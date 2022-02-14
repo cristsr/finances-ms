@@ -25,8 +25,8 @@ async function bootstrap() {
 
   if (showDocs) {
     const config = new DocumentBuilder()
-      .setTitle('Boilerplate')
-      .setDescription('The Boilerplate API description')
+      .setTitle('Finances API')
+      .setDescription('The Finances API description')
       .setVersion('1.0')
       .build();
 
@@ -38,12 +38,13 @@ async function bootstrap() {
   }
 
   const port = configService.get(CONFIG.PORT);
+  const env = configService.get(CONFIG.ENV);
 
   await app.listen(port);
 
   listRoutes(app);
 
-  Logger.log(`App running at port ${port}`, 'Bootstrap');
+  Logger.log(`App running on port ${port} in ${env} env `, 'Bootstrap');
 }
 bootstrap();
 

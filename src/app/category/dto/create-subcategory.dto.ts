@@ -1,11 +1,10 @@
-import { IsMongoId, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSubcategoryDto {
+  @ApiProperty()
   @IsString()
   name: string;
 }
 
-export class CreateManySubcategoriesDto extends CreateSubcategoryDto {
-  @IsMongoId()
-  category: string;
-}
+export type CreateSubcategory = CreateSubcategoryDto | CreateSubcategoryDto[];

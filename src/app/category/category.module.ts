@@ -4,8 +4,6 @@ import { Category, CategorySchema } from './schemas/category.schema';
 import { Subcategory, SubcategorySchema } from './schemas/subcategory.schema';
 import { CategoryService } from './services/category.service';
 import { CategoryController } from './controllers/category.controller';
-import { SubcategoryController } from './controllers/subcategory.controller';
-import { SubcategoryService } from './services/subcategory.service';
 
 @Module({
   imports: [
@@ -14,7 +12,7 @@ import { SubcategoryService } from './services/subcategory.service';
       { name: Subcategory.name, schema: SubcategorySchema },
     ]),
   ],
-  controllers: [CategoryController, SubcategoryController],
-  providers: [ValidationPipe, CategoryService, SubcategoryService],
+  controllers: [CategoryController],
+  providers: [ValidationPipe, CategoryService],
 })
 export class CategoryModule {}

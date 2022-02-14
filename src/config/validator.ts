@@ -7,9 +7,7 @@ import { Environment } from './keys';
 export function validate(config: Record<string, unknown>) {
   const logger = new Logger(validate.name);
 
-  const validatedConfig = plainToClass(Environment, config, {
-    enableImplicitConversion: true,
-  });
+  const validatedConfig = plainToClass(Environment, config);
 
   const errors = validateSync(validatedConfig, {
     skipMissingProperties: false,
