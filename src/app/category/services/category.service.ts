@@ -19,7 +19,11 @@ export class CategoryService {
   }
 
   findAll() {
-    return this.categoryModel.find().populate('subcategories').exec();
+    return this.categoryModel
+      .find()
+      .populate('subcategories')
+      .sort('name')
+      .exec();
   }
 
   findOne(id: string) {

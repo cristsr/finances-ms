@@ -19,6 +19,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "app/*": ["src/app/*"],
+      "core/*": ["src/core/*"],
       "config/*": ["src/config/*"],
       "database/*": ["src/database/*"]
     }

@@ -8,14 +8,14 @@ import {
   Delete,
   Put,
 } from '@nestjs/common';
-import { MongoIdPipe } from 'app/shared/pipes/mongo-id.pipe';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { MongoIdPipe } from 'core/pipes/mongo-id.pipe';
 import { CategoryService } from '../services/category.service';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CreateCategoryPipe } from '../pipes/create-category.pipe';
 import { CreateCategory } from '../dto/create-category.dto';
 import { CreateSubcategory } from '../dto/create-subcategory.dto';
 import { CreateSubcategoryPipe } from '../pipes/create-subcategory.pipe';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Categories')
 @Controller({

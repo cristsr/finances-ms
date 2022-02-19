@@ -10,7 +10,7 @@ export class CreateCategoryPipe implements PipeTransform {
       });
     }
 
-    return new ValidationPipe().transform(value, {
+    return new ValidationPipe({ transform: true }).transform(value, {
       type: 'body',
       metatype: CreateCategoryDto,
     });
