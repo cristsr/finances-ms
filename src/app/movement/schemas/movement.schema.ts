@@ -15,7 +15,7 @@ export class Movement {
   description: string;
 
   @Prop({ required: true })
-  amount: string;
+  amount: number;
 
   @Prop({
     required: true,

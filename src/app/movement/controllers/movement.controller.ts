@@ -6,12 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MovementService } from '../services/movement.service';
-import { CreateMovementDto } from '../dto/create-movement.dto';
-import { UpdateMovementDto } from '../dto/update-movement.dto';
-import { MongoIdPipe } from 'app/shared/pipes/mongo-id.pipe';
+import {
+  CreateMovementDto,
+  MovementQueryDto,
+  UpdateMovementDto,
+} from 'app/movement/dto';
+import { MongoIdPipe } from 'core/pipes/mongo-id.pipe';
+import { Pageable } from 'core/utils';
+import { Movement } from '../schemas/movement.schema';
 
 @ApiTags('movement')
 @Controller({
@@ -29,8 +35,8 @@ export class MovementController {
 
   @ApiOperation({ summary: 'Get all movements' })
   @Get()
-  findAll() {
-    return this.movementService.findAll();
+  findAll(@Query() params: MovementQueryDto): Promise<Pageable<Movement>> {
+    return this.movementService.findAll(params);
   }
 
   @ApiOperation({ summary: 'Get movement by id' })
