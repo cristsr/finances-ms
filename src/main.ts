@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { CONFIG } from 'config/keys';
+import { ENV } from 'src/environment/keys';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -21,7 +21,7 @@ async function bootstrap() {
 
   app.enableVersioning();
 
-  const showDocs: boolean = configService.get(CONFIG.SHOW_DOCS);
+  const showDocs: boolean = configService.get(ENV.SHOW_DOCS);
 
   if (showDocs) {
     const config = new DocumentBuilder()
@@ -37,8 +37,8 @@ async function bootstrap() {
     });
   }
 
-  const port = configService.get(CONFIG.PORT);
-  const env = configService.get(CONFIG.ENV);
+  const port = configService.get(ENV.PORT);
+  const env = configService.get(ENV.ENV);
 
   await app.listen(port);
 

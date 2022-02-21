@@ -1,7 +1,8 @@
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateSubcategoryDto } from './create-subcategory.dto';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateSubcategoryDto } from './subcategory-request.dto';
 
 export class CreateCategoryDto {
   @ApiProperty()
@@ -10,7 +11,7 @@ export class CreateCategoryDto {
 
   @ApiProperty()
   @IsString()
-  icon: number;
+  icon: string;
 
   @ApiProperty()
   @IsString()
@@ -24,4 +25,4 @@ export class CreateCategoryDto {
   subcategories: CreateSubcategoryDto[];
 }
 
-export type CreateCategory = CreateCategoryDto | CreateCategoryDto[];
+export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {}

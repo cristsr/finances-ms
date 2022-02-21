@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsMongoId, IsNumber, IsString } from 'class-validator';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateMovementDto {
@@ -18,12 +18,12 @@ export class CreateMovementDto {
   amount: number;
 
   @ApiProperty()
-  @IsMongoId()
-  category: string;
+  @IsNumber()
+  category: number;
 
   @ApiProperty()
-  @IsMongoId()
-  subcategory: string;
+  @IsNumber()
+  subcategory: number;
 }
 
 export class UpdateMovementDto extends PartialType(CreateMovementDto) {}

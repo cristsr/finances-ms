@@ -20,8 +20,8 @@
     "paths": {
       "app/*": ["src/app/*"],
       "core/*": ["src/core/*"],
-      "config/*": ["src/config/*"],
-      "database/*": ["src/database/*"]
+      "database/*": ["src/database/*"],
+      "environment": ["src/environment"]
     }
   }
 }

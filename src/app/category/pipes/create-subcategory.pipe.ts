@@ -1,6 +1,6 @@
 import { ParseArrayPipe, PipeTransform, ValidationPipe } from '@nestjs/common';
 import { isArray } from 'class-validator';
-import { CreateSubcategoryDto } from 'app/category/dto/create-subcategory.dto';
+import { CreateSubcategoryDto } from 'app/category/dto';
 
 export class CreateSubcategoryPipe implements PipeTransform {
   transform(value: any): any {

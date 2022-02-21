@@ -1,42 +1,60 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import {
-  CreateMovementDto,
-  MovementQueryDto,
-  UpdateMovementDto,
-} from 'app/movement/dto';
-import { Movement, MovementDocument } from '../schemas/movement.schema';
-import { Model } from 'mongoose';
-import { Pageable } from 'core/utils';
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Pageable } from 'core/utils';
+import { Repository } from 'typeorm';
+import { MovementEntity } from 'app/movement/entities';
+import {
+  CreateMovementDto,
+  UpdateMovementDto,
+  MovementQueryDto,
+} from 'app/movement/dto';
 
 @Injectable()
 export class MovementService {
   constructor(
-    @InjectModel(Movement.name)
-    private movementModel: Model<MovementDocument>,
+    @InjectRepository(MovementEntity)
+    private movementRepository: Repository<MovementEntity>,
+
     @InjectMapper() private mapper: Mapper,
   ) {}
 
-  async create(createMovementDto: CreateMovementDto) {
-    return this.movementModel.create(createMovementDto);
+  create({ category, subcategory, ...rest }: CreateMovementDto) {
+    return this.movementRepository
+      .save({
+        ...rest,
+        category: {
+          id: category,
+        },
+        subcategory: {
+          id: subcategory,
+        },
+      })
+      .catch((e) => {
+        throw new InternalServerErrorException(e.message);
+      });
   }
 
-  async findAll(params: MovementQueryDto): Promise<Pageable<Movement>> {
-    const data = await this.movementModel
-      .find()
-      .skip(params.perPage * params.page)
-      .limit(params.perPage)
-      .sort(params.orderBy || '-date')
-      .populate('category subcategory')
-      .exec()
+  async findAll(params: MovementQueryDto): Promise<Pageable<MovementEntity>> {
+    const data = await this.movementRepository
+      .find({
+        relations: ['category', 'subcategory'],
+        skip: params.perPage * params.page,
+        take: params.perPage,
+        order: {
+          date: 'DESC',
+        },
+      })
       .catch((e) => {
-        // Handle internal errors
         throw new InternalServerErrorException(e.message);
       });
 
-    const total = await this.movementModel.estimatedDocumentCount().exec();
+    const total = await this.movementRepository.count();
     const totalPages = Math.ceil(total / params.perPage);
 
     return {
@@ -49,27 +67,43 @@ export class MovementService {
     };
   }
 
-  findOne(id: string): Promise<Movement> {
-    return this.movementModel.findById(id).exec();
+  findOne(id: number): Promise<MovementEntity> {
+    return this.movementRepository
+      .findOneOrFail(id, {
+        relations: ['category', 'subcategory'],
+      })
+      .catch(() => {
+        throw new NotFoundException('Movement not found');
+      });
   }
 
-  update(id: string, updateMovementDto: UpdateMovementDto) {
-    return this.movementModel
-      .findByIdAndUpdate(id, updateMovementDto, {
-        new: true,
-      })
-      .exec();
+  update(id: number, { category, subcategory, ...rest }: UpdateMovementDto) {
+    const partialEntity: any = { ...rest };
+
+    if (category) {
+      partialEntity.category = { id: category };
+    }
+
+    if (subcategory) {
+      partialEntity.subcategory = { id: subcategory };
+    }
+
+    return this.movementRepository.update(id, partialEntity).catch((e) => {
+      throw new InternalServerErrorException(e.message);
+    });
   }
 
   remove(id: string) {
-    return this.movementModel.findByIdAndRemove(id);
+    return this.movementRepository.delete(id).catch((e) => {
+      throw new InternalServerErrorException(e.message);
+    });
   }
 
-  findByCategory(category: string) {
-    return this.movementModel.find({ category });
+  findByCategory(category: number) {
+    return this.movementRepository.find({ category: { id: category } });
   }
 
-  findBySubcategory(subcategory: string) {
-    return this.movementModel.find({ subcategory });
+  findBySubcategory(subcategory: number) {
+    return this.movementRepository.find({ subcategory: { id: subcategory } });
   }
 }

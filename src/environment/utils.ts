@@ -1,7 +1,7 @@
 import { plainToClass } from 'class-transformer';
 import { validateSync } from 'class-validator';
 
-import { Logger } from '@nestjs/common';
+import { Logger, Type } from '@nestjs/common';
 import { Environment } from './keys';
 
 export function validate(config: Record<string, unknown>) {
@@ -23,4 +23,14 @@ export function validate(config: Record<string, unknown>) {
   }
 
   return validatedConfig;
+}
+
+export function mapEnvironmentKeys<T>(type: Type<T>): Readonly<{
+  [key in keyof T]: string;
+}> {
+  const keys = Object.keys(new type()) as (keyof T)[];
+
+  const entries: (keyof T)[][] = keys.map((key) => [key, key]);
+
+  return Object.freeze(Object.fromEntries(entries));
 }
