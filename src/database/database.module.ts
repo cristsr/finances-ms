@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ENV } from 'environment';
@@ -17,12 +16,6 @@ import { ENV } from 'environment';
         ssl: configService.get(ENV.DB_SSL),
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
-      }),
-      inject: [ConfigService],
-    }),
-    MongooseModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get(ENV.DB_URI),
       }),
       inject: [ConfigService],
     }),
