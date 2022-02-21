@@ -1,5 +1,6 @@
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateSubcategoryDto {
   @ApiProperty()
@@ -7,4 +8,4 @@ export class CreateSubcategoryDto {
   name: string;
 }
 
-export type CreateSubcategory = CreateSubcategoryDto | CreateSubcategoryDto[];
+export class UpdateSubcategoryDto extends PartialType(CreateSubcategoryDto) {}

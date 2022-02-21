@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MovementService } from '../services/movement.service';
@@ -15,9 +16,8 @@ import {
   MovementQueryDto,
   UpdateMovementDto,
 } from 'app/movement/dto';
-import { MongoIdPipe } from 'core/pipes/mongo-id.pipe';
 import { Pageable } from 'core/utils';
-import { Movement } from '../schemas/movement.schema';
+import { MovementEntity } from 'app/movement/entities/movement.entity';
 
 @ApiTags('movement')
 @Controller({
@@ -35,20 +35,22 @@ export class MovementController {
 
   @ApiOperation({ summary: 'Get all movements' })
   @Get()
-  findAll(@Query() params: MovementQueryDto): Promise<Pageable<Movement>> {
+  findAll(
+    @Query() params: MovementQueryDto,
+  ): Promise<Pageable<MovementEntity>> {
     return this.movementService.findAll(params);
   }
 
   @ApiOperation({ summary: 'Get movement by id' })
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.movementService.findOne(id);
   }
 
   @ApiOperation({ summary: 'Update movement by id' })
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateMovementDto: UpdateMovementDto,
   ) {
     return this.movementService.update(id, updateMovementDto);
@@ -56,17 +58,17 @@ export class MovementController {
 
   @ApiOperation({ summary: 'Delete movement by id' })
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: string) {
     return this.movementService.remove(id);
   }
 
   @Get('/category/:id')
-  findByCategory(@Param('id', MongoIdPipe) category: string) {
+  findByCategory(@Param('id', ParseIntPipe) category: number) {
     return this.movementService.findByCategory(category);
   }
 
   @Get('/subcategory/:id')
-  findBySubcategory(@Param('id', MongoIdPipe) subcategory: string) {
+  findBySubcategory(@Param('id', ParseIntPipe) subcategory: number) {
     return this.movementService.findBySubcategory(subcategory);
   }
 }

@@ -1,5 +1,5 @@
 import { ParseArrayPipe, PipeTransform, ValidationPipe } from '@nestjs/common';
-import { CreateCategoryDto } from 'app/category/dto/create-category.dto';
+import { CreateCategoryDto } from 'app/category/dto';
 import { isArray } from 'class-validator';
 
 export class CreateCategoryPipe implements PipeTransform {
