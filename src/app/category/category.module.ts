@@ -9,5 +9,6 @@ import { SubcategoryEntity } from 'app/category/entities/subcategory.entity';
   imports: [TypeOrmModule.forFeature([CategoryEntity, SubcategoryEntity])],
   controllers: [CategoryController],
   providers: [ValidationPipe, CategoryService],
+  exports: [TypeOrmModule.forFeature([CategoryEntity, SubcategoryEntity])],
 })
 export class CategoryModule {}

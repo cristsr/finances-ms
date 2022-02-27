@@ -1,19 +1,27 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
+import { DateTime } from 'luxon';
 
 @Entity('movements')
 export class MovementEntity {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({
+    type: 'date',
+    nullable: true,
+  })
   date: Date;
+
+  @Column({ nullable: true })
+  type: 'ingreso' | 'egreso';
 
   @Column()
   description: string;
@@ -32,4 +40,13 @@ export class MovementEntity {
   })
   @JoinColumn()
   subcategory: SubcategoryEntity;
+
+  @CreateDateColumn({
+    type: 'timestamptz',
+    transformer: {
+      from: (date: Date) => DateTime.fromJSDate(date).setZone('America/Bogota'),
+      to: (date: string) => date,
+    },
+  })
+  createdAt: Date;
 }

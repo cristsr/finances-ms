@@ -1,5 +1,5 @@
 import { PageableQuery } from 'core/utils';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class MovementQueryDto implements PageableQuery {
@@ -7,9 +7,15 @@ export class MovementQueryDto implements PageableQuery {
   @IsNumber()
   page: number;
 
+  @IsOptional()
   @Transform(({ value }) => Number(value))
   @IsNumber()
   perPage: number;
+
+  @IsOptional()
+  @IsIn(['days', 'weeks', 'months', 'years'])
+  @IsString()
+  groupBy: 'days' | 'weeks' | 'months' | 'years' = 'days';
 
   @IsString()
   @IsOptional()

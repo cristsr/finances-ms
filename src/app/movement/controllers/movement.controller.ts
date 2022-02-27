@@ -11,13 +11,13 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MovementService } from '../services/movement.service';
+import { Pageable } from 'core/utils';
 import {
   CreateMovementDto,
   MovementQueryDto,
   UpdateMovementDto,
 } from 'app/movement/dto';
-import { Pageable } from 'core/utils';
-import { MovementEntity } from 'app/movement/entities/movement.entity';
+import { MovementEntity } from 'app/movement/entities';
 
 @ApiTags('movement')
 @Controller({
@@ -41,6 +41,12 @@ export class MovementController {
     return this.movementService.findAll(params);
   }
 
+  @ApiOperation({ summary: 'Get all movements' })
+  @Get('group-by')
+  groupBy(@Query() params: MovementQueryDto): Promise<any> {
+    return this.movementService.findAllAndGroupBy(params);
+  }
+
   @ApiOperation({ summary: 'Get movement by id' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
@@ -58,8 +64,14 @@ export class MovementController {
 
   @ApiOperation({ summary: 'Delete movement by id' })
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.movementService.remove(id);
+  }
+
+  @ApiOperation({ summary: 'Delete all movements' })
+  @Delete()
+  removeAll() {
+    return this.movementService.removeAll();
   }
 
   @Get('/category/:id')

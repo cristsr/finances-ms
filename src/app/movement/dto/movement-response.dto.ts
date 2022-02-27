@@ -1,27 +1,47 @@
-import { Movement } from 'app/movement/dto/movement';
 import { ApiProperty } from '@nestjs/swagger';
-import { AutoMap } from '@automapper/classes';
+import {
+  IsArray,
+  IsDateString,
+  IsNumber,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { CategoryDto, SubCategoryDto } from 'app/category/dto';
 
-export class MovementDto implements Movement {
+export class MovementResponseDto {
   @ApiProperty()
-  @AutoMap()
-  id: string;
+  @IsNumber()
+  id: number;
 
   @ApiProperty()
-  @AutoMap()
+  @IsDateString()
   date: string;
 
   @ApiProperty()
-  @AutoMap()
+  @IsString()
   description: string;
 
   @ApiProperty()
-  @AutoMap()
+  @IsNumber()
   amount: number;
 
   @ApiProperty()
-  @AutoMap()
-  category;
+  @IsNumber()
+  category: CategoryDto;
 
-  subcategory;
+  @ApiProperty()
+  @IsNumber()
+  subcategory: SubCategoryDto;
+}
+
+export class GroupMovementDto {
+  @IsString()
+  group: string;
+
+  @ApiProperty()
+  @IsArray()
+  @Type(() => MovementResponseDto)
+  @ValidateNested({ each: true })
+  values: MovementResponseDto[];
 }
