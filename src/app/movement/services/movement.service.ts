@@ -141,8 +141,9 @@ export class MovementService {
       return acc;
     }, {});
 
-    const data = Object.entries(groupedBy).map(([group, values]) => ({
+    const data = Object.entries<any>(groupedBy).map(([group, values]) => ({
       group,
+      accumulated: values.reduce((acc, curr) => acc + curr.amount, 0),
       values,
     })) as GroupMovementDto[];
 

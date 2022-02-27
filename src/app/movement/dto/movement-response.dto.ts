@@ -39,6 +39,9 @@ export class GroupMovementDto {
   @IsString()
   group: string;
 
+  @IsNumber()
+  accumulated: number;
+
   @ApiProperty()
   @IsArray()
   @Type(() => MovementResponseDto)
