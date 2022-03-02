@@ -18,7 +18,7 @@ export class MovementEntity {
     type: 'date',
     nullable: true,
   })
-  date: Date;
+  date: string;
 
   @Column({ nullable: true })
   type: 'ingreso' | 'egreso';

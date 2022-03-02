@@ -7,6 +7,8 @@ import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
 import { AutomapperModule } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
+import { SummaryModule } from 'app/summary/summary.module';
+import { BudgetModule } from 'app/budget/budget.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { classes } from '@automapper/classes';
     DatabaseModule,
     CategoryModule,
     MovementModule,
+    SummaryModule,
+    BudgetModule,
   ],
   controllers: [AppController],
   providers: [],

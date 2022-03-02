@@ -17,15 +17,8 @@ import {
   GroupMovementDto,
 } from 'app/movement/dto';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
-import { DateTime } from 'luxon';
 import { classToPlain } from 'class-transformer';
-
-const formatMap = {
-  days: (date: string) => DateTime.fromSQL(date).toFormat('yyyy-MM-dd'),
-  weeks: (date: string) => DateTime.fromSQL(date).toFormat('yyyy-WW'),
-  months: (date: string) => DateTime.fromSQL(date).toFormat('yyyy-MM'),
-  years: (date: string) => DateTime.fromSQL(date).toFormat('yyyy'),
-};
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class MovementService {
@@ -121,7 +114,7 @@ export class MovementService {
       .find({
         where: `extract(${params.groupBy} from date) in (${whereQuery})`,
         order: {
-          date: 'DESC',
+          createdAt: 'DESC',
         },
         relations: ['category', 'subcategory'],
       })
@@ -130,7 +123,9 @@ export class MovementService {
       });
 
     const groupedBy = records.reduce((acc, curr) => {
-      const key = formatMap[params.groupBy](curr.date as any);
+      const key = DateTime.fromSQL(curr.date as any).toFormat(
+        formatMap[params.groupBy],
+      );
 
       if (!acc[key]) {
         acc[key] = [];
@@ -148,7 +143,6 @@ export class MovementService {
     })) as GroupMovementDto[];
 
     const query = `select count(*) as total from (select distinct extract(${params.groupBy} from date) from movements) as t`;
-
     const [{ total }] = await this.movementRepository
       .query(query)
       .catch((e) => {
@@ -161,8 +155,8 @@ export class MovementService {
       page: params.page,
       perPage: params.perPage,
       totalPages,
-      lastPage: totalPages === params.page,
       total: +total,
+      lastPage: totalPages === params.page,
       data,
     };
   }
@@ -239,3 +233,10 @@ export class MovementService {
     };
   }
 }
+
+const formatMap = {
+  days: 'yyyy-MM-dd',
+  weeks: 'yyyy-WW',
+  months: 'yyyy-MM',
+  years: 'yyyy',
+};

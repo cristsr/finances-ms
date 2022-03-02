@@ -1,16 +1,11 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsNumber, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsDateString, IsNumber, IsString } from 'class-validator';
 
 export class CreateMovementDto {
   @ApiProperty()
-  @Transform(({ value }) => {
-    console.log(new Date(value));
-    return new Date(value);
-  })
-  @IsDate()
-  date: Date;
+  @IsDateString()
+  date: string;
 
   @ApiProperty()
   @IsString()
