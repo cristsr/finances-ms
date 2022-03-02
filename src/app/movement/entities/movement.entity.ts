@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import { DateTime } from 'luxon';
+import { MovementType } from 'app/movement/types';
 
 @Entity('movements')
 export class MovementEntity {
@@ -21,7 +22,7 @@ export class MovementEntity {
   date: string;
 
   @Column({ nullable: true })
-  type: 'ingreso' | 'egreso';
+  type: MovementType;
 
   @Column()
   description: string;

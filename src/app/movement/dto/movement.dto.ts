@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsIn, IsNumber, IsString } from 'class-validator';
+import { MovementType, movementTypes } from 'app/movement/types';
 
 export class Movement {
   @ApiProperty()
@@ -11,8 +12,8 @@ export class Movement {
   date: string | Date;
 
   @ApiProperty()
-  @IsIn(['ingreso', 'egreso'])
-  type: 'ingreso' | 'egreso';
+  @IsIn(movementTypes)
+  type: MovementType;
 
   @ApiProperty()
   @IsString()
