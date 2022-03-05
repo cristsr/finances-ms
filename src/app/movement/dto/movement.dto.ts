@@ -1,19 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsIn, IsNumber, IsString } from 'class-validator';
-import { MovementType, movementTypes } from 'app/movement/types';
+import {
+  IsArray,
+  IsDateString,
+  IsNumber,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { CategoryDto, SubCategoryDto } from 'app/category/dto';
 
-export class Movement {
+export class MovementDto {
   @ApiProperty()
   @IsNumber()
   id: number;
 
   @ApiProperty()
   @IsDateString()
-  date: string | Date;
-
-  @ApiProperty()
-  @IsIn(movementTypes)
-  type: MovementType;
+  date: string;
 
   @ApiProperty()
   @IsString()
@@ -25,9 +28,23 @@ export class Movement {
 
   @ApiProperty()
   @IsNumber()
-  category: number;
+  category: CategoryDto;
 
   @ApiProperty()
   @IsNumber()
-  subcategory: number;
+  subcategory: SubCategoryDto;
+}
+
+export class GroupMovementDto {
+  @IsString()
+  group: string;
+
+  @IsNumber()
+  accumulated: number;
+
+  @ApiProperty()
+  @IsArray()
+  @Type(() => MovementDto)
+  @ValidateNested({ each: true })
+  values: MovementDto[];
 }

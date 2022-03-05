@@ -1,11 +1,16 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsIn, IsNumber, IsString } from 'class-validator';
+import { MovementType, movementTypes } from 'app/movement/types';
 
 export class CreateMovementDto {
   @ApiProperty()
   @IsDateString()
   date: string;
+
+  @ApiProperty()
+  @IsIn(movementTypes)
+  type: MovementType;
 
   @ApiProperty()
   @IsString()

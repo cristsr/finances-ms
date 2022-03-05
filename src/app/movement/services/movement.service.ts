@@ -7,7 +7,7 @@ import {
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Pageable } from 'core/utils';
+import { getWeekOfDate, Pageable } from 'core/utils';
 import { Repository } from 'typeorm';
 import { MovementEntity } from 'app/movement/entities';
 import {
@@ -15,6 +15,7 @@ import {
   UpdateMovementDto,
   MovementQueryDto,
   GroupMovementDto,
+  MovementDto,
 } from 'app/movement/dto';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import { classToPlain } from 'class-transformer';
@@ -102,9 +103,11 @@ export class MovementService {
   ): Promise<Pageable<GroupMovementDto>> {
     const skip = params.perPage * (params.page - 1);
 
+    const dateFormat = DateformatMap[params.groupBy];
+
     const whereQuery = this.movementRepository
       .createQueryBuilder()
-      .select(`distinct extract(${params.groupBy} from date)`, 'field')
+      .select(`distinct to_char(date, '${dateFormat.sql}')`, 'field')
       .orderBy('field', 'DESC')
       .limit(params.perPage)
       .offset(skip)
@@ -112,8 +115,9 @@ export class MovementService {
 
     const records = await this.movementRepository
       .find({
-        where: `extract(${params.groupBy} from date) in (${whereQuery})`,
+        where: `to_char(date, '${dateFormat.sql}') in (${whereQuery})`,
         order: {
+          date: 'DESC',
           createdAt: 'DESC',
         },
         relations: ['category', 'subcategory'],
@@ -122,27 +126,25 @@ export class MovementService {
         throw new InternalServerErrorException(e.message);
       });
 
-    const groupedBy = records.reduce((acc, curr) => {
-      const key = DateTime.fromSQL(curr.date as any).toFormat(
-        formatMap[params.groupBy],
-      );
+    const groupedBy = records.reduce((map, curr) => {
+      const key = dateFormat.format(curr.date);
 
-      if (!acc[key]) {
-        acc[key] = [];
+      if (!map.has(key)) {
+        map.set(key, []);
       }
 
-      acc[key].push(curr);
+      map.get(key).push(curr);
 
-      return acc;
-    }, {});
+      return map;
+    }, new Map<string, Array<MovementDto>>());
 
-    const data = Object.entries<any>(groupedBy).map(([group, values]) => ({
+    const data = [...groupedBy.entries()].map(([group, values]) => ({
       group,
       accumulated: values.reduce((acc, curr) => acc + curr.amount, 0),
       values,
     })) as GroupMovementDto[];
 
-    const query = `select count(*) as total from (select distinct extract(${params.groupBy} from date) from movements) as t`;
+    const query = `select count(*) as total from (select distinct to_char(date, '${dateFormat.sql}') from movements) as t`;
     const [{ total }] = await this.movementRepository
       .query(query)
       .catch((e) => {
@@ -234,9 +236,25 @@ export class MovementService {
   }
 }
 
-const formatMap = {
-  days: 'yyyy-MM-dd',
-  weeks: 'yyyy-WW',
-  months: 'yyyy-MM',
-  years: 'yyyy',
+const DateformatMap = {
+  days: {
+    sql: 'YYYY-MM-DD',
+    format: (input: string) => DateTime.fromSQL(input).toFormat('yyyy-MM-dd'),
+  },
+  weeks: {
+    sql: 'YYYY-MM-W',
+    format: (input: string) => {
+      const date = DateTime.fromSQL(input);
+      const week = getWeekOfDate(date);
+      return `${date.year}-${date.month}-${week}`;
+    },
+  },
+  months: {
+    sql: 'YYYY-MM',
+    format: (input: string) => DateTime.fromSQL(input).toFormat('yyyy-MM'),
+  },
+  years: {
+    sql: 'YYYY',
+    format: (input: string) => DateTime.fromSQL(input).toFormat('yyyy'),
+  },
 };
