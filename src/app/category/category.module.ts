@@ -5,10 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoryEntity } from 'app/category/entities/category.entity';
 import { SubcategoryEntity } from 'app/category/entities/subcategory.entity';
 
+const entities = TypeOrmModule.forFeature([CategoryEntity, SubcategoryEntity]);
+
 @Module({
-  imports: [TypeOrmModule.forFeature([CategoryEntity, SubcategoryEntity])],
+  imports: [entities],
   controllers: [CategoryController],
   providers: [ValidationPipe, CategoryService],
-  exports: [TypeOrmModule.forFeature([CategoryEntity, SubcategoryEntity])],
+  exports: [entities],
 })
 export class CategoryModule {}

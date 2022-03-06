@@ -1,15 +1,24 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BudgetController } from 'app/budget/controllers';
 import { BudgetService } from 'app/budget/services';
 import { BudgetEntity, BudgetMovementEntity } from 'app/budget/entities';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { BudgetSchedule } from './schedulers/budget.schedule';
+import { CategoryModule } from 'app/category/category.module';
 
 const entities = TypeOrmModule.forFeature([BudgetEntity, BudgetMovementEntity]);
 
 @Module({
   controllers: [BudgetController],
-  imports: [entities],
-  providers: [BudgetService],
+  imports: [
+    ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
+    CategoryModule,
+    entities,
+  ],
+  providers: [BudgetService, BudgetSchedule],
   exports: [entities],
 })
 export class BudgetModule {}

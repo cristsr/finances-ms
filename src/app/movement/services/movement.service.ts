@@ -20,6 +20,8 @@ import {
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import { classToPlain } from 'class-transformer';
 import { DateTime } from 'luxon';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MovementEvents } from 'app/movement/types';
 
 @Injectable()
 export class MovementService {
@@ -34,6 +36,8 @@ export class MovementService {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectMapper() private mapper: Mapper,
+
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create({
@@ -55,7 +59,7 @@ export class MovementService {
         );
       });
 
-    return this.movementRepository
+    const movement = await this.movementRepository
       .save({
         ...rest,
         category: categoryEntity,
@@ -64,6 +68,10 @@ export class MovementService {
       .catch((e) => {
         throw new InternalServerErrorException(e.detail);
       });
+
+    this.eventEmitter.emit(MovementEvents.CREATE, movement);
+
+    return movement;
   }
 
   async findAll(params: MovementQueryDto): Promise<any> {

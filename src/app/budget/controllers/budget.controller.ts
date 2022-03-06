@@ -10,7 +10,10 @@ import {
 import { BudgetService } from 'app/budget/services';
 import { CreateBudgetDto, UpdateBudgetDto } from 'app/budget/dto';
 
-@Controller('budget')
+@Controller({
+  path: 'budgets',
+  version: '1',
+})
 export class BudgetController {
   constructor(private readonly budgetService: BudgetService) {}
 
