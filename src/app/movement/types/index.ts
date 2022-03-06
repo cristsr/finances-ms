@@ -4,4 +4,5 @@ export type MovementType = typeof movementTypes[number];
 
 export enum MovementEvents {
   CREATE = 'movement:create',
+  UPDATE = 'movement:update',
 }

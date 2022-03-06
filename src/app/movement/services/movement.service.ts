@@ -184,30 +184,34 @@ export class MovementService {
   async update(
     id: number,
     { category, subcategory, ...rest }: UpdateMovementDto,
-  ): Promise<Record<string, string>> {
-    const partialEntity: any = { ...rest };
+  ): Promise<MovementEntity> {
+    const partialEntity: any = { id, ...rest };
 
     if (category) {
-      partialEntity.category = { id: category };
+      partialEntity.category = await this.categoryRepository
+        .findOneOrFail(category)
+        .catch(() => {
+          throw new NotFoundException('Category not found');
+        });
     }
 
     if (subcategory) {
-      partialEntity.subcategory = { id: subcategory };
+      partialEntity.subcategory = await this.subcategoryRepository
+        .findOneOrFail(subcategory)
+        .catch(() => {
+          throw new NotFoundException('Subcategory not found');
+        });
     }
 
-    const result = await this.movementRepository
-      .update(id, partialEntity)
+    const movementEntity = await this.movementRepository
+      .save(partialEntity)
       .catch((e) => {
         throw new InternalServerErrorException(e.message);
       });
 
-    if (!result.affected) {
-      throw new NotFoundException('Movement not found');
-    }
+    this.eventEmitter.emit(MovementEvents.UPDATE, movementEntity);
 
-    return {
-      message: 'Movement updated successfully',
-    };
+    return movementEntity;
   }
 
   async remove(id: number): Promise<Record<string, string>> {

@@ -72,26 +72,6 @@ export class BudgetService {
     });
   }
 
-  async createBudgetMovement(movement: MovementEntity): Promise<void> {
-    const budget = await this.budgetRepository.findOne({
-      category: movement.category,
-      active: true,
-    });
-
-    if (!budget) {
-      return;
-    }
-
-    await this.budgetMovementRepository
-      .save({
-        budget,
-        movement,
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
-
   findOne(id: number) {
     return `This action returns a #${id} budget`;
   }
@@ -114,5 +94,83 @@ export class BudgetService {
 
   remove(id: number) {
     return `This action removes a #${id} budget`;
+  }
+
+  async createBudgetMovement(movement: MovementEntity): Promise<void> {
+    const budget = await this.budgetRepository.findOne({
+      category: movement.category,
+      active: true,
+    });
+
+    if (!budget) {
+      return;
+    }
+
+    await this.budgetMovementRepository
+      .save({ budget, movement })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  async updateBudgetMovement(movement: MovementEntity): Promise<void> {
+    // Find budget movement where movement id is equal to movement id
+    await this.budgetMovementRepository
+      .findOneOrFail({
+        where: {
+          movement,
+        },
+        relations: ['movement', 'budget', 'budget.category'],
+      })
+      .then(async (budgetMovement) => {
+        // Budget category and movement category are equal then do nothing
+        if (budgetMovement.budget.category.id === movement.category.id) {
+          return;
+        }
+
+        // Find budget where category is equal to movement category
+        const budget = await this.budgetRepository.findOne({
+          category: movement.category,
+          active: true,
+        });
+
+        // Budget not found then delete the budget movement record
+        if (!budget) {
+          await this.budgetMovementRepository
+            .remove(budgetMovement)
+            .catch(() => {
+              console.error(
+                'Error removing budget movement ' + budgetMovement.id,
+              );
+            });
+          return;
+        }
+
+        // Budget found then update the budget movement record
+        await this.budgetMovementRepository
+          .update(budgetMovement.id, { budget })
+          .catch((error) => {
+            console.log(error);
+          });
+      })
+      .catch(async () => {
+        // Find budget where category is equal to movement category
+        const budget = await this.budgetRepository.findOne({
+          category: movement.category,
+          active: true,
+        });
+
+        // budget don't exist then return
+        if (!budget) {
+          return;
+        }
+
+        // Create new budget movement record
+        await this.budgetMovementRepository
+          .save({ budget, movement })
+          .catch((err) => {
+            console.error('Error creating budget movement ' + err.message);
+          });
+      });
   }
 }

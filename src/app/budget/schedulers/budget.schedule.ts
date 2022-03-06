@@ -17,8 +17,14 @@ export class BudgetSchedule {
   }
 
   @OnEvent(MovementEvents.CREATE)
-  async onOrderCreated(movement: MovementEntity) {
+  async onMovementCreated(movement: MovementEntity) {
     await this.budgetService.createBudgetMovement(movement);
-    console.log('Movement created: ', movement);
+    console.log('Budget movement created: ', movement.id);
+  }
+
+  @OnEvent(MovementEvents.UPDATE)
+  async onMovementUpdated(movement: MovementEntity) {
+    await this.budgetService.updateBudgetMovement(movement);
+    console.log('Budget movement updated: ', movement.id);
   }
 }
