@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { BudgetService } from 'app/budget/services';
 import { CreateBudgetDto, UpdateBudgetDto } from 'app/budget/dto';
@@ -40,5 +41,10 @@ export class BudgetController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.budgetService.remove(+id);
+  }
+
+  @Get('/:id/movements')
+  findMovements(@Param('id', ParseIntPipe) id: number) {
+    return this.budgetService.getBudgetMovements(id);
   }
 }

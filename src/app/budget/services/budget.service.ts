@@ -96,6 +96,19 @@ export class BudgetService {
     return `This action removes a #${id} budget`;
   }
 
+  async getBudgetMovements(budgetId: number): Promise<MovementEntity[]> {
+    const movements = await this.budgetMovementRepository.find({
+      where: {
+        budget: {
+          id: budgetId,
+        },
+      },
+      relations: ['movement', 'movement.category', 'movement.subcategory'],
+    });
+
+    return movements.map(({ movement }) => movement);
+  }
+
   async createBudgetMovement(movement: MovementEntity): Promise<void> {
     const budget = await this.budgetRepository.findOne({
       category: movement.category,
