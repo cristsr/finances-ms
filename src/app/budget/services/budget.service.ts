@@ -72,8 +72,12 @@ export class BudgetService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} budget`;
+  findOne(id: number): Promise<BudgetEntity> {
+    return this.budgetRepository
+      .findOneOrFail(id, { relations: ['category'] })
+      .catch(() => {
+        throw new NotFoundException('Budget not found');
+      });
   }
 
   update(id: number, updateBudgetDto: UpdateBudgetDto) {
