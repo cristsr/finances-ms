@@ -125,7 +125,7 @@ export class BudgetService {
       .find({
         relations: ['category', 'subcategory'],
         where: {
-          category: budget.category.id,
+          category: budget.category,
           date: Between(budget.startDate, budget.endDate),
         },
         order: {
