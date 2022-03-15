@@ -6,10 +6,12 @@ import {
 import { UpdateBudgetDto, CreateBudgetDto, BudgetDto } from 'app/budget/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BudgetEntity, BudgetMovementEntity } from 'app/budget/entities';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { CategoryEntity } from 'app/category/entities';
 import { MovementEntity } from 'app/movement/entities';
+import { MovementService } from 'app/movement/services/movement.service';
+import { GroupMovementDto } from 'app/movement/dto';
 
 @Injectable()
 export class BudgetService {
@@ -22,6 +24,9 @@ export class BudgetService {
 
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
+
+    @InjectRepository(MovementEntity)
+    private movementRepository: Repository<MovementEntity>,
   ) {}
 
   async create(createBudgetDto: CreateBudgetDto): Promise<BudgetEntity> {
@@ -48,28 +53,37 @@ export class BudgetService {
   }
 
   async findAll(): Promise<BudgetDto[]> {
-    // TODO: Refactor this to use a join query with the needed data
-    const budgetsRecords: BudgetEntity[] = await this.budgetRepository
+    const budgets = await this.budgetRepository
       .find({
-        relations: ['category', 'budgetMovements', 'budgetMovements.movement'],
+        relations: ['category'],
         where: {
           active: true,
         },
       })
-      .catch((error) => {
-        throw new InternalServerErrorException(error.message);
+      .catch((e) => {
+        throw new InternalServerErrorException(e.message);
       });
 
-    return budgetsRecords.map<BudgetDto>(({ budgetMovements, ...budget }) => {
-      const spent = budgetMovements.reduce((acc, { movement }) => {
-        return acc + movement?.amount || 0;
-      }, 0);
+    const result = [];
 
-      return {
+    for (const budget of budgets) {
+      const { spent } = await this.movementRepository
+        .createQueryBuilder()
+        .select('sum(amount)', 'spent')
+        .where({
+          category: budget.category.id,
+          date: Between(budget.startDate, budget.endDate),
+        })
+        .getRawOne()
+        .catch(() => ({ spent: 0 }));
+
+      result.push({
         ...budget,
-        spent,
-      };
-    });
+        spent: Number(spent),
+      });
+    }
+
+    return result;
   }
 
   findOne(id: number): Promise<BudgetEntity> {
@@ -100,94 +114,29 @@ export class BudgetService {
     return `This action removes a #${id} budget`;
   }
 
-  async getBudgetMovements(budgetId: number): Promise<MovementEntity[]> {
-    const movements = await this.budgetMovementRepository.find({
-      where: {
-        budget: {
-          id: budgetId,
-        },
-      },
-      relations: ['movement', 'movement.category', 'movement.subcategory'],
-    });
-
-    return movements.map(({ movement }) => movement);
-  }
-
-  async createBudgetMovement(movement: MovementEntity): Promise<void> {
-    const budget = await this.budgetRepository.findOne({
-      category: movement.category,
-      active: true,
-    });
-
-    if (!budget) {
-      return;
-    }
-
-    await this.budgetMovementRepository
-      .save({ budget, movement })
-      .catch((error) => {
-        console.log(error);
+  async getBudgetMovements(budgetId: number): Promise<GroupMovementDto[]> {
+    const budget = await this.budgetRepository
+      .findOneOrFail(budgetId, { relations: ['category'] })
+      .catch(() => {
+        throw new NotFoundException('Budget not found');
       });
-  }
 
-  async updateBudgetMovement(movement: MovementEntity): Promise<void> {
-    // Find budget movement where movement id is equal to movement id
-    await this.budgetMovementRepository
-      .findOneOrFail({
+    const movements = await this.movementRepository
+      .find({
+        relations: ['category', 'subcategory'],
         where: {
-          movement,
+          category: budget.category.id,
+          date: Between(budget.startDate, budget.endDate),
         },
-        relations: ['movement', 'budget', 'budget.category'],
+        order: {
+          date: 'DESC',
+          createdAt: 'DESC',
+        },
       })
-      .then(async (budgetMovement) => {
-        // Budget category and movement category are equal then do nothing
-        if (budgetMovement.budget.category.id === movement.category.id) {
-          return;
-        }
-
-        // Find budget where category is equal to movement category
-        const budget = await this.budgetRepository.findOne({
-          category: movement.category,
-          active: true,
-        });
-
-        // Budget not found then delete the budget movement record
-        if (!budget) {
-          await this.budgetMovementRepository
-            .remove(budgetMovement)
-            .catch(() => {
-              console.error(
-                'Error removing budget movement ' + budgetMovement.id,
-              );
-            });
-          return;
-        }
-
-        // Budget found then update the budget movement record
-        await this.budgetMovementRepository
-          .update(budgetMovement.id, { budget })
-          .catch((error) => {
-            console.log(error);
-          });
-      })
-      .catch(async () => {
-        // Find budget where category is equal to movement category
-        const budget = await this.budgetRepository.findOne({
-          category: movement.category,
-          active: true,
-        });
-
-        // budget don't exist then return
-        if (!budget) {
-          return;
-        }
-
-        // Create new budget movement record
-        await this.budgetMovementRepository
-          .save({ budget, movement })
-          .catch((err) => {
-            console.error('Error creating budget movement ' + err.message);
-          });
+      .catch((e) => {
+        throw new InternalServerErrorException(e.message);
       });
+
+    return MovementService.groupMovements(movements);
   }
 }

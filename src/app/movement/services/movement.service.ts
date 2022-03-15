@@ -7,19 +7,17 @@ import {
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getWeekOfDate, Pageable } from 'core/utils';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { MovementEntity } from 'app/movement/entities';
 import {
   CreateMovementDto,
-  UpdateMovementDto,
-  MovementQueryDto,
   GroupMovementDto,
   MovementDto,
+  MovementQueryDto,
+  UpdateMovementDto,
 } from 'app/movement/dto';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
-import { classToPlain } from 'class-transformer';
-import { DateTime } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MovementEvents } from 'app/movement/types';
 
@@ -74,101 +72,45 @@ export class MovementService {
     return movement;
   }
 
-  async findAll(params: MovementQueryDto): Promise<any> {
-    const data = await this.movementRepository
-      .find({
-        select: [],
-        relations: ['category', 'subcategory'],
-        skip: params.perPage * (params.page - 1),
-        take: params.perPage,
-        order: {
-          date: 'DESC',
-        },
-      })
-      .catch((e) => {
-        throw new InternalServerErrorException(e.message);
-      });
+  async findAll(params: MovementQueryDto): Promise<GroupMovementDto[]> {
+    let whereConditions: any;
 
-    if (!data.length) {
-      throw new NotFoundException('No movements found');
+    if (params.groupBy === 'day') {
+      whereConditions = {
+        date: DateTime.fromISO(params.date).toSQLDate(),
+      };
     }
 
-    const total = await this.movementRepository.count();
-    const totalPages = Math.ceil(total / params.perPage);
+    if (params.groupBy === 'week') {
+      const interval = Interval.fromISO(params.date);
+      whereConditions = {
+        date: Between(interval.start.toSQLDate(), interval.end.toSQLDate()),
+      };
+    }
 
-    return {
-      page: params.page,
-      perPage: params.perPage,
-      totalPages,
-      lastPage: totalPages === params.page,
-      total,
-      data: classToPlain(data),
-    };
-  }
+    if (params.groupBy === 'month') {
+      const date = DateTime.fromISO(params.date).toFormat('yyyy-MM');
+      whereConditions = `to_char(date, 'YYYY-MM') = '${date}'`;
+    }
 
-  async findAllAndGroupBy(
-    params: MovementQueryDto,
-  ): Promise<Pageable<GroupMovementDto>> {
-    const skip = params.perPage * (params.page - 1);
-
-    const dateFormat = DateformatMap[params.groupBy];
-
-    const whereQuery = this.movementRepository
-      .createQueryBuilder()
-      .select(`distinct to_char(date, '${dateFormat.sql}')`, 'field')
-      .orderBy('field', 'DESC')
-      .limit(params.perPage)
-      .offset(skip)
-      .getQuery();
+    if (params.groupBy === 'year') {
+      const date = DateTime.fromISO(params.date).toFormat('yyyy');
+      whereConditions = `to_char(date, 'YYYY') = '${date}'`;
+    }
 
     const records = await this.movementRepository
       .find({
-        where: `to_char(date, '${dateFormat.sql}') in (${whereQuery})`,
+        relations: ['category', 'subcategory'],
+        where: whereConditions,
         order: {
           date: 'DESC',
-          createdAt: 'DESC',
         },
-        relations: ['category', 'subcategory'],
       })
       .catch((e) => {
         throw new InternalServerErrorException(e.message);
       });
 
-    const groupedBy = records.reduce((map, curr) => {
-      const key = dateFormat.format(curr.date);
-
-      if (!map.has(key)) {
-        map.set(key, []);
-      }
-
-      map.get(key).push(curr);
-
-      return map;
-    }, new Map<string, Array<MovementDto>>());
-
-    const data = [...groupedBy.entries()].map(([group, values]) => ({
-      group,
-      accumulated: values.reduce((acc, curr) => acc + curr.amount, 0),
-      values,
-    })) as GroupMovementDto[];
-
-    const query = `select count(*) as total from (select distinct to_char(date, '${dateFormat.sql}') from movements) as t`;
-    const [{ total }] = await this.movementRepository
-      .query(query)
-      .catch((e) => {
-        throw new InternalServerErrorException(e.message);
-      });
-
-    const totalPages = Math.ceil(+total / params.perPage);
-
-    return {
-      page: params.page,
-      perPage: params.perPage,
-      totalPages,
-      total: +total,
-      lastPage: totalPages === params.page,
-      data,
-    };
+    return MovementService.groupMovements(records);
   }
 
   findOne(id: number): Promise<MovementEntity> {
@@ -246,27 +188,24 @@ export class MovementService {
       message: 'All movements deleted successfully',
     };
   }
-}
 
-const DateformatMap = {
-  days: {
-    sql: 'YYYY-MM-DD',
-    format: (input: string) => DateTime.fromSQL(input).toFormat('yyyy-MM-dd'),
-  },
-  weeks: {
-    sql: 'YYYY-MM-W',
-    format: (input: string) => {
-      const date = DateTime.fromSQL(input);
-      const week = getWeekOfDate(date);
-      return `${date.year}-${date.month}-${week}`;
-    },
-  },
-  months: {
-    sql: 'YYYY-MM',
-    format: (input: string) => DateTime.fromSQL(input).toFormat('yyyy-MM'),
-  },
-  years: {
-    sql: 'YYYY',
-    format: (input: string) => DateTime.fromSQL(input).toFormat('yyyy'),
-  },
-};
+  static groupMovements(movements: MovementEntity[]): GroupMovementDto[] {
+    const groupedByDay = movements.reduce((map, curr) => {
+      const key = DateTime.fromSQL(curr.date).toFormat('yyyy-MM-dd');
+
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+
+      map.get(key).push(curr);
+
+      return map;
+    }, new Map<string, Array<MovementDto>>());
+
+    return [...groupedByDay.entries()].map(([date, values]) => ({
+      date,
+      accumulated: values.reduce((acc, curr) => acc + curr.amount, 0),
+      values,
+    }));
+  }
+}

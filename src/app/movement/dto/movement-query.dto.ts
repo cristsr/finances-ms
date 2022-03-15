@@ -1,23 +1,11 @@
-import { PageableQuery } from 'core/utils';
-import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsIn, IsString } from 'class-validator';
+import { GroupBy, groupByTypes } from 'app/movement/types';
 
-export class MovementQueryDto implements PageableQuery {
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  page: number;
-
-  @IsOptional()
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  perPage: number;
-
-  @IsOptional()
-  @IsIn(['days', 'weeks', 'months', 'years'])
+export class MovementQueryDto {
+  @IsIn(groupByTypes)
   @IsString()
-  groupBy: 'days' | 'weeks' | 'months' | 'years' = 'days';
+  groupBy: GroupBy;
 
   @IsString()
-  @IsOptional()
-  orderBy: string;
+  date: string;
 }

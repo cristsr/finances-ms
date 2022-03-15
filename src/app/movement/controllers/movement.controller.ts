@@ -11,13 +11,12 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MovementService } from '../services/movement.service';
-import { Pageable } from 'core/utils';
 import {
   CreateMovementDto,
+  GroupMovementDto,
   MovementQueryDto,
   UpdateMovementDto,
 } from 'app/movement/dto';
-import { MovementEntity } from 'app/movement/entities';
 
 @ApiTags('movement')
 @Controller({
@@ -35,16 +34,8 @@ export class MovementController {
 
   @ApiOperation({ summary: 'Get all movements' })
   @Get()
-  findAll(
-    @Query() params: MovementQueryDto,
-  ): Promise<Pageable<MovementEntity>> {
+  findAll(@Query() params: MovementQueryDto): Promise<GroupMovementDto[]> {
     return this.movementService.findAll(params);
-  }
-
-  @ApiOperation({ summary: 'Get all movements' })
-  @Get('group-by')
-  groupBy(@Query() params: MovementQueryDto): Promise<any> {
-    return this.movementService.findAllAndGroupBy(params);
   }
 
   @ApiOperation({ summary: 'Get movement by id' })

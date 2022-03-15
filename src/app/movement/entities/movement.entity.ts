@@ -33,19 +33,25 @@ export class MovementEntity {
   @ManyToOne(() => CategoryEntity, (t: CategoryEntity) => t.id, {
     onDelete: 'SET NULL',
   })
-  @JoinColumn()
+  @JoinColumn({
+    name: 'category_id',
+  })
   category: CategoryEntity;
 
   @ManyToOne(() => SubcategoryEntity, (t: SubcategoryEntity) => t.id, {
     onDelete: 'SET NULL',
   })
-  @JoinColumn()
+  @JoinColumn({
+    name: 'subcategory_id',
+  })
   subcategory: SubcategoryEntity;
 
   @CreateDateColumn({
+    name: 'created_at',
     type: 'timestamptz',
     transformer: {
-      from: (date: Date) => DateTime.fromJSDate(date).setZone('America/Bogota'),
+      from: (date: Date) =>
+        DateTime.fromJSDate(date).setZone('America/Bogota').toString(),
       to: (date: string) => date,
     },
   })

@@ -7,6 +7,7 @@ import { BudgetService } from 'app/budget/services';
 import { BudgetEntity, BudgetMovementEntity } from 'app/budget/entities';
 import { BudgetSchedule } from './schedulers/budget.schedule';
 import { CategoryModule } from 'app/category/category.module';
+import { MovementModule } from 'app/movement/movement.module';
 
 const entities = TypeOrmModule.forFeature([BudgetEntity, BudgetMovementEntity]);
 
@@ -16,6 +17,7 @@ const entities = TypeOrmModule.forFeature([BudgetEntity, BudgetMovementEntity]);
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     CategoryModule,
+    MovementModule,
     entities,
   ],
   providers: [BudgetService, BudgetSchedule],

@@ -37,7 +37,7 @@ export class MovementDto {
 
 export class GroupMovementDto {
   @IsString()
-  group: string;
+  date: string;
 
   @IsNumber()
   accumulated: number;

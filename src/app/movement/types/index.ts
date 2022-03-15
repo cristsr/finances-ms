@@ -6,3 +6,6 @@ export enum MovementEvents {
   CREATE = 'movement:create',
   UPDATE = 'movement:update',
 }
+
+export const groupByTypes = ['day', 'week', 'month', 'year'] as const;
+export type GroupBy = typeof groupByTypes[number];
