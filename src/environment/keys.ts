@@ -4,45 +4,45 @@ import { mapEnvironmentKeys } from 'src/environment/utils';
 
 export class Environment {
   @IsString()
-  ENV: string = undefined;
+  ENV: string = null;
 
   @Transform(({ value }) => Number(value))
   @IsNumber()
-  PORT: number = undefined;
+  PORT: number = null;
 
   @IsString()
-  DB_TYPE: string = undefined;
+  DB_TYPE: string = null;
 
   @IsString()
-  DB_HOST: string = undefined;
+  DB_HOST: string = null;
 
   @Transform(({ value }) => Number(value))
   @IsNumber()
-  DB_PORT: number = undefined;
+  DB_PORT: number = null;
 
   @IsString()
-  DB_NAME: string = undefined;
+  DB_NAME: string = null;
 
   @IsString()
-  DB_USER: string = undefined;
+  DB_USER: string = null;
 
   @IsString()
-  DB_PASSWORD: string = undefined;
+  DB_PASSWORD: string = null;
 
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  DB_SSL: boolean = undefined;
+  DB_SSL: boolean = null;
 
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  DB_SYNCHRONIZE: boolean = undefined;
+  DB_SYNCHRONIZE: boolean = null;
 
   @IsString()
-  DB_URI: string = undefined;
+  DB_URI: string = null;
 
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  SHOW_DOCS: boolean = undefined;
+  SHOW_DOCS: boolean = null;
 }
 
 export const ENV = mapEnvironmentKeys<Environment>(Environment);
