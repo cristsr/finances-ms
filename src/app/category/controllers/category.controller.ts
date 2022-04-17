@@ -102,19 +102,19 @@ export class CategoryController {
   }
 
   @ApiOperation({ summary: 'Get subcategory by id' })
-  @Get(':id/subcategories/:idsub')
+  @Get(':id/subcategories/:idSub')
   findSubcategory(
     @Param('id', ParseIntPipe) category: number,
-    @Param('idsub', ParseIntPipe) subcategory: number,
+    @Param('idSub', ParseIntPipe) subcategory: number,
   ) {
     return this.categoryService.findSubcategory(category, subcategory);
   }
 
   @ApiOperation({ summary: 'Update subcategory by id' })
-  @Put(':id/subcategories/:idsub')
+  @Put(':id/subcategories/:idSub')
   updateSubcategory(
     @Param('id', ParseIntPipe) category: number,
-    @Param('idsub', ParseIntPipe) subcategory: number,
+    @Param('idSub', ParseIntPipe) subcategory: number,
     @Body() updateSubcategoryDto: UpdateCategoryDto,
   ) {
     return this.categoryService.updateSubcategory(
