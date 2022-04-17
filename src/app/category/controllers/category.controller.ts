@@ -125,10 +125,10 @@ export class CategoryController {
   }
 
   @ApiOperation({ summary: 'Delete subcategory by id' })
-  @Delete(':id/subcategories/:idsub')
+  @Delete(':id/subcategories/:idSub')
   removeSubcategory(
     @Param('id', ParseIntPipe) category: number,
-    @Param('idsub', ParseIntPipe) subcategory: number,
+    @Param('idSub', ParseIntPipe) subcategory: number,
   ) {
     return this.categoryService.removeSubcategory(category, subcategory);
   }
