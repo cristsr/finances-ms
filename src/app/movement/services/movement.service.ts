@@ -7,7 +7,7 @@ import {
 import { InjectMapper } from '@automapper/nestjs';
 import { Mapper } from '@automapper/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, In, Raw, Repository } from 'typeorm';
 import { MovementEntity } from 'app/movement/entities';
 import {
   CreateMovementDto,
@@ -73,38 +73,55 @@ export class MovementService {
   }
 
   async findAll(params: MovementQueryDto): Promise<GroupMovementDto[]> {
-    let whereConditions: any;
+    const whereConditions: any = {};
 
-    if (params.groupBy === 'day') {
-      whereConditions = {
-        date: DateTime.fromISO(params.date).toSQLDate(),
-      };
+    // Setup where conditions
+    if (params.period === 'day') {
+      whereConditions.date = DateTime.fromISO(params.date).toSQLDate();
     }
 
-    if (params.groupBy === 'week') {
+    if (params.period === 'week') {
       const interval = Interval.fromISO(params.date);
-      whereConditions = {
-        date: Between(interval.start.toSQLDate(), interval.end.toSQLDate()),
-      };
+      whereConditions.date = Between(
+        interval.start.toSQLDate(),
+        interval.end.toSQLDate(),
+      );
     }
 
-    if (params.groupBy === 'month') {
+    if (params.period === 'month') {
       const date = DateTime.fromISO(params.date).toFormat('yyyy-MM');
-      whereConditions = `to_char(date, 'YYYY-MM') = '${date}'`;
+      whereConditions.date = Raw(
+        (alias) => `to_char(${alias}, 'YYYY-MM') = :date`,
+        { date },
+      );
     }
 
-    if (params.groupBy === 'year') {
+    if (params.period === 'year') {
       const date = DateTime.fromISO(params.date).toFormat('yyyy');
-      whereConditions = `to_char(date, 'YYYY') = '${date}'`;
+      whereConditions.date = Raw(
+        (alias) => `to_char(${alias}, 'YYYY') = :date`,
+        { date },
+      );
     }
 
+    if (params.category) {
+      whereConditions.category = await this.categoryRepository
+        .findOneOrFail(params.category)
+        .catch(() => {
+          throw new NotFoundException('Given category not exists');
+        });
+    }
+
+    if (!!params.type?.length) {
+      whereConditions.type = In(params.type);
+    }
+
+    // Execute query
     const records = await this.movementRepository
       .find({
         relations: ['category', 'subcategory'],
         where: whereConditions,
-        order: {
-          date: 'DESC',
-        },
+        order: { date: 'DESC' },
       })
       .catch((e) => {
         throw new InternalServerErrorException(e.message);
@@ -191,20 +208,18 @@ export class MovementService {
 
   static groupMovements(movements: MovementEntity[]): GroupMovementDto[] {
     const groupedByDay = movements.reduce((map, curr) => {
-      const key = DateTime.fromSQL(curr.date).toFormat('yyyy-MM-dd');
-
-      if (!map.has(key)) {
-        map.set(key, []);
+      if (!map.has(curr.date)) {
+        map.set(curr.date, []);
       }
 
-      map.get(key).push(curr);
+      map.get(curr.date).push(curr);
 
       return map;
     }, new Map<string, Array<MovementDto>>());
 
     return [...groupedByDay.entries()].map(([date, values]) => ({
       date,
-      accumulated: values.reduce((acc, curr) => acc + curr.amount, 0),
+      accumulated: values.reduce((acc: number, { amount }) => acc + amount, 0),
       values,
     }));
   }
