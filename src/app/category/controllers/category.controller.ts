@@ -11,8 +11,8 @@ import {
   ParseArrayPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CategoryService } from '../services/category.service';
-import { CreateSubcategoryPipe } from '../pipes/create-subcategory.pipe';
+import { CategoryService } from 'app/category/services';
+import { CreateSubcategoryPipe } from 'app/category/pipes';
 import {
   CreateCategoryDto,
   CreateSubcategoryDto,

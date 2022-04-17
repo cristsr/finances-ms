@@ -5,7 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BudgetController } from 'app/budget/controllers';
 import { BudgetService } from 'app/budget/services';
 import { BudgetEntity, BudgetMovementEntity } from 'app/budget/entities';
-import { BudgetSchedule } from './schedulers/budget.schedule';
+import { BudgetSchedule } from 'app/budget/schedulers';
 import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
 

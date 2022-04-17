@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SummaryService } from './services/summary.service';
-import { SummaryController } from './controllers/summary.controller';
+import { SummaryController } from 'app/summary/controllers';
 import { MovementModule } from 'app/movement/movement.module';
 
 @Module({

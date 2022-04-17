@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BalanceEntity, MovementEntity } from 'app/movement/entities';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
+import { BalanceEntity, MovementEntity } from 'app/movement/entities';
 
 @Injectable()
 export class SummaryService {

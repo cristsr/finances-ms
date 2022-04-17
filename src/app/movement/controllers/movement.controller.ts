@@ -10,7 +10,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { MovementService } from '../services/movement.service';
+import { MovementService } from 'app/movement/services';
 import {
   CreateMovementDto,
   GroupMovementDto,
