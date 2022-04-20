@@ -4,18 +4,16 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
+import { DateTime } from 'luxon';
 import { MovementEntity } from 'app/movement/entities';
 import { BalanceEntity, SummaryEntity } from 'app/summary/entities';
-import { DateTime } from 'luxon';
 
 @Injectable()
 export class SummaryService {
   private logger = new Logger(SummaryService.name);
 
   constructor(
-    private connection: Connection,
-
     @InjectRepository(BalanceEntity)
     private balanceRepository: Repository<BalanceEntity>,
 
