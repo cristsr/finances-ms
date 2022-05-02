@@ -9,6 +9,7 @@ import { AutomapperModule } from '@automapper/nestjs';
 import { classes } from '@automapper/classes';
 import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
+import { BillModule } from 'app/bill/bill.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { BudgetModule } from 'app/budget/budget.module';
     MovementModule,
     SummaryModule,
     BudgetModule,
+    BillModule,
   ],
   controllers: [AppController],
   providers: [],

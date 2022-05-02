@@ -9,6 +9,7 @@ import {
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import { DateTime } from 'luxon';
 import { MovementType } from 'app/movement/types';
+import { optTransformer } from 'database/utils';
 
 @Entity('movements')
 export class MovementEntity {
@@ -49,11 +50,11 @@ export class MovementEntity {
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamptz',
-    transformer: {
-      from: (date: Date) =>
-        DateTime.fromJSDate(date).setZone('America/Bogota').toString(),
-      to: (date: string) => date,
-    },
+    transformer: optTransformer({
+      from: (date: Date) => {
+        return DateTime.fromJSDate(date).setZone('America/Bogota').toString();
+      },
+    }),
   })
   createdAt: Date;
 }

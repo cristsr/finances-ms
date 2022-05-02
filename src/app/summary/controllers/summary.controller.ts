@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { SummaryService } from '../services/summary.service';
+import { SummaryService } from 'app/summary/services';
 
 @Controller({
   path: 'summary',

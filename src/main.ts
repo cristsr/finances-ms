@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import { ENV } from 'src/environment/keys';
+import { ENV } from 'environment';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
