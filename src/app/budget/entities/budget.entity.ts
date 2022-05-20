@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CategoryEntity } from 'app/category/entities';
-import { BudgetMovementEntity } from 'app/budget/entities/budget-movement.entity';
 
 @Entity('budgets')
 export class BudgetEntity {
@@ -37,7 +36,4 @@ export class BudgetEntity {
   })
   @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
-
-  @OneToMany(() => BudgetMovementEntity, (e) => e.budget)
-  budgetMovements: BudgetMovementEntity[];
 }
