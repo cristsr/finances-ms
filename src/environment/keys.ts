@@ -37,9 +37,6 @@ export class Environment {
   @IsBoolean()
   DB_SYNCHRONIZE: boolean = null;
 
-  @IsString()
-  DB_URI: string = null;
-
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   SHOW_DOCS: boolean = null;

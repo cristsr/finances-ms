@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { UpdateBudgetDto, CreateBudgetDto, BudgetDto } from 'app/budget/dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BudgetEntity, BudgetMovementEntity } from 'app/budget/entities';
+import { BudgetEntity } from 'app/budget/entities';
 import { Between, Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { CategoryEntity } from 'app/category/entities';
@@ -19,9 +19,6 @@ export class BudgetService {
   constructor(
     @InjectRepository(BudgetEntity)
     private budgetRepository: Repository<BudgetEntity>,
-
-    @InjectRepository(BudgetMovementEntity)
-    private budgetMovementRepository: Repository<BudgetMovementEntity>,
 
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,

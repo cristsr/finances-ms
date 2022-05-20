@@ -13,7 +13,9 @@ import { ENV } from 'environment';
         database: configService.get<string>(ENV.DB_NAME),
         username: configService.get(ENV.DB_USER),
         password: configService.get(ENV.DB_PASSWORD),
-        ssl: configService.get(ENV.DB_SSL),
+        ssl: {
+          rejectUnauthorized: false,
+        },
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
       }),
