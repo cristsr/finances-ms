@@ -9,5 +9,6 @@ export class BudgetDto {
   spent: number;
   repeat: boolean;
   active: boolean;
+  percentage: number;
   category: CategoryDto;
 }

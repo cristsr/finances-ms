@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsString } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
-export class CreateBudgetDto {
+export class CreateBudget {
   @ApiProperty()
   @IsString()
   name: string;
@@ -20,4 +20,4 @@ export class CreateBudgetDto {
   repeat: boolean;
 }
 
-export class UpdateBudgetDto extends PartialType(CreateBudgetDto) {}
+export class UpdateBudget extends PartialType(CreateBudget) {}

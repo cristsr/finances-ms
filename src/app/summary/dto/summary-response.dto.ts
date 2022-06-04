@@ -1,4 +1,4 @@
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 export class SummaryDto {
   @IsNumber()
@@ -9,4 +9,21 @@ export class SummaryDto {
 
   @IsNumber()
   expense: number;
+}
+
+export class ExpenseDto {
+  @IsNumber()
+  amount: number;
+
+  @IsString()
+  name: string;
+
+  @IsString()
+  color: string;
+
+  @IsString()
+  icon: string;
+
+  @IsNumber()
+  percentage: number;
 }

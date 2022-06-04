@@ -26,47 +26,66 @@ export class SummaryService {
 
   async summary(): Promise<Record<string, any>> {
     const balance = await this.balanceRepository.findOne();
-    const pie = await this.generateExpensesByPeriod();
-    const bar = await this.generateExpensesByWeek();
-    const latestMovements = await this.getLatestMovements();
+    const expenses = await this.expenses();
+    const lastMovements = await this.lastMovements();
 
     return {
       balance,
-      pie,
-      bar,
-      latestMovements,
+      expenses,
+      lastMovements,
+      // bar,
     };
   }
 
-  private async generateExpensesByPeriod(): Promise<any> {
+  balance(): Promise<BalanceEntity> {
+    return this.balanceRepository.findOne();
+  }
+
+  async expenses(): Promise<any> {
     try {
+      const mapSummary = (data: any[]) => {
+        const total = data.reduce((acc, cur) => acc + cur.amount, 0);
+
+        return data.map((item) => ({
+          amount: item.amount,
+          name: item.name,
+          color: item.color,
+          icon: item.icon,
+          percentage: Math.round((item.amount / total) * 100),
+        }));
+      };
+
       const daily = await this.summaryRepository
         .createQueryBuilder()
-        .select('cast(SUM(amount) as real) as amount, name, color')
+        .select('SUM(amount)::float as amount, name, color, icon')
         .where('date = current_date')
-        .groupBy('amount, name, color')
+        .groupBy('name, color, icon')
         .orderBy('amount', 'DESC')
         .take(5)
-        .getRawMany();
+        .getRawMany()
+        .then(mapSummary);
 
       const weekly = await this.summaryRepository
         .createQueryBuilder()
-        .select('cast(SUM(amount) as real) as amount, name, color')
+        .select('SUM(amount)::float as amount, name, color, icon')
         .where(
           `to_char(date, 'YYYY-MM-W') = to_char(current_date, 'YYYY-MM-W')`,
         )
-        .groupBy('amount, name, color')
+        .groupBy('name, color, icon')
         .orderBy('amount', 'DESC')
         .take(5)
-        .getRawMany();
+        .getRawMany()
+        .then(mapSummary);
 
       const monthly = await this.summaryRepository
         .createQueryBuilder()
-        .select('cast(SUM(amount) as real) as amount, name, color')
-        .groupBy('amount, name, color')
+        .select('SUM(amount)::float as amount, name, color, icon')
+        .where(`to_char(date, 'YYYY-MM') = to_char(current_date, 'YYYY-MM')`)
+        .groupBy('name, color, icon')
         .orderBy('amount', 'DESC')
         .take(5)
-        .getRawMany();
+        .getRawMany()
+        .then(mapSummary);
 
       return {
         daily,
@@ -79,6 +98,19 @@ export class SummaryService {
     }
   }
 
+  lastMovements(): Promise<MovementEntity[]> {
+    return this.movementRepository.find({
+      relations: ['category', 'subcategory'],
+      order: {
+        date: 'DESC',
+      },
+      take: 5,
+    });
+  }
+
+  /**
+   * @Deprecated
+   */
   private async generateExpensesByWeek(): Promise<any> {
     const today = DateTime.local();
 
@@ -113,15 +145,5 @@ export class SummaryService {
     }
 
     return result;
-  }
-
-  getLatestMovements(): Promise<MovementEntity[]> {
-    return this.movementRepository.find({
-      relations: ['category', 'subcategory'],
-      order: {
-        date: 'DESC',
-      },
-      take: 5,
-    });
   }
 }

@@ -1,15 +1,14 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectMapper } from '@automapper/nestjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Mapper } from '@automapper/core';
 import { Between, In, Raw, Repository } from 'typeorm';
 import { DateTime, Interval } from 'luxon';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MovementEntity } from 'app/movement/entities';
 import {
   CreateMovementDto,
@@ -18,11 +17,12 @@ import {
   MovementQueryDto,
   UpdateMovementDto,
 } from 'app/movement/dto';
-import { MovementEvents } from 'app/movement/types';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 
 @Injectable()
 export class MovementService {
+  readonly #logger = new Logger(MovementService.name);
+
   constructor(
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>,
@@ -34,55 +34,66 @@ export class MovementService {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectMapper() private mapper: Mapper,
-
-    private eventEmitter: EventEmitter2,
   ) {}
 
-  async create({
-    category,
-    subcategory,
-    ...rest
-  }: CreateMovementDto): Promise<MovementEntity> {
-    const categoryEntity = await this.categoryRepository
-      .findOneOrFail(category)
-      .catch(() => {
-        throw new UnprocessableEntityException('Given category not exists');
-      });
+  /**
+   * It creates a movement
+   * @param {CreateMovementDto} data - CreateMovementDto
+   * @returns MovementEntity
+   */
+  async create(data: CreateMovementDto): Promise<MovementEntity> {
+    const category = await this.categoryRepository.findOne(data.category);
 
-    const subcategoryEntity = await this.subcategoryRepository
-      .findOneOrFail(subcategory, { where: { category: categoryEntity } })
-      .catch(() => {
-        throw new UnprocessableEntityException(
-          'Given subcategory not exists or not belongs to given category',
-        );
-      });
+    if (!category) {
+      const msg = `Category ${data.category} not found`;
+      this.#logger.log(msg);
+      throw new NotFoundException(msg);
+    }
+
+    const subcategory = await this.subcategoryRepository.findOne(
+      data.subcategory,
+      {
+        where: {
+          category,
+        },
+      },
+    );
+
+    if (!subcategory) {
+      const msg = `Subcategory ${data.subcategory} not found`;
+      this.#logger.log(msg);
+      throw new NotFoundException(msg);
+    }
 
     const movement = await this.movementRepository
-      .save({
-        ...rest,
-        category: categoryEntity,
-        subcategory: subcategoryEntity,
-      })
+      .save({ ...data, category, subcategory })
       .catch((e) => {
+        this.#logger.log(`Error creating movement: ${e.detail}`);
         throw new InternalServerErrorException(e.detail);
       });
 
-    this.eventEmitter.emit(MovementEvents.CREATE, movement);
+    this.#logger.log(`Movement ${movement.id} created`);
 
     return movement;
   }
 
-  async findAll(params: MovementQueryDto): Promise<GroupMovementDto[]> {
-    const whereConditions: any = {};
+  /**
+   * It finds all movements that match the given query parameters
+   * @param {MovementQueryDto} params - MovementQueryDto
+   * @returns An array of MovementDto objects
+   */
+  async findAll(params: MovementQueryDto): Promise<MovementDto[]> {
+    // Where conditions
+    const where: any = {};
 
     // Setup where conditions
     if (params.period === 'day') {
-      whereConditions.date = DateTime.fromISO(params.date).toSQLDate();
+      where.date = DateTime.fromISO(params.date).toSQLDate();
     }
 
     if (params.period === 'week') {
       const interval = Interval.fromISO(params.date);
-      whereConditions.date = Between(
+      where.date = Between(
         interval.start.toSQLDate(),
         interval.end.toSQLDate(),
       );
@@ -90,110 +101,126 @@ export class MovementService {
 
     if (params.period === 'month') {
       const date = DateTime.fromISO(params.date).toFormat('yyyy-MM');
-      whereConditions.date = Raw(
-        (alias) => `to_char(${alias}, 'YYYY-MM') = :date`,
-        { date },
-      );
+      where.date = Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
+        date,
+      });
     }
 
     if (params.period === 'year') {
       const date = DateTime.fromISO(params.date).toFormat('yyyy');
-      whereConditions.date = Raw(
-        (alias) => `to_char(${alias}, 'YYYY') = :date`,
-        { date },
-      );
+      where.date = Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
+        date,
+      });
     }
 
     if (params.category) {
-      whereConditions.category = await this.categoryRepository
+      where.category = await this.categoryRepository
         .findOneOrFail(params.category)
         .catch(() => {
-          throw new NotFoundException('Given category not exists');
+          const msg = `Category ${params.category} not found`;
+          this.#logger.log(msg);
+          throw new NotFoundException(msg);
         });
     }
 
     if (!!params.type?.length) {
-      whereConditions.type = In(params.type);
+      where.type = In(params.type);
     }
 
     // Execute query
-    const records = await this.movementRepository
+    return await this.movementRepository
       .find({
         relations: ['category', 'subcategory'],
-        where: whereConditions,
-        order: { date: 'DESC' },
+        where,
+        order: { date: 'DESC', createdAt: 'DESC' },
       })
       .catch((e) => {
-        throw new InternalServerErrorException(e.message);
+        const msg = `Error finding movements: ${e.message}`;
+        this.#logger.log(msg);
+        throw new InternalServerErrorException(msg);
       });
-
-    return MovementService.groupMovements(records);
   }
 
+  /**
+   * It finds a movement by id, and if it doesn't find it, it throws a NotFoundException
+   * @param {number} id - number - the id of the movement we want to find
+   * @returns A promise of a MovementEntity
+   */
   findOne(id: number): Promise<MovementEntity> {
     return this.movementRepository
       .findOneOrFail(id, {
         relations: ['category', 'subcategory'],
       })
       .catch(() => {
-        throw new NotFoundException('Movement not found');
+        const msg = `Movement ${id} not found`;
+        this.#logger.log(msg);
+        throw new NotFoundException(msg);
       });
   }
 
-  async update(
-    id: number,
-    { category, subcategory, ...rest }: UpdateMovementDto,
-  ): Promise<MovementEntity> {
-    const partialEntity: any = { id, ...rest };
+  /**
+   * It updates a movement entity with the given data, and returns the updated entity
+   * @param {number} id - number - the id of the movement to update
+   * @param {UpdateMovementDto} data - UpdateMovementDto
+   * @returns The updated movement entity
+   */
+  async update(id: number, data: UpdateMovementDto): Promise<MovementEntity> {
+    const partialEntity: any = { id, ...data };
 
-    if (category) {
+    if (data.category) {
       partialEntity.category = await this.categoryRepository
-        .findOneOrFail(category)
+        .findOneOrFail(data.category)
         .catch(() => {
-          throw new NotFoundException('Category not found');
+          const msg = `Category ${data.category} not found`;
+          this.#logger.log(msg);
+          throw new NotFoundException(msg);
         });
     }
 
-    if (subcategory) {
+    if (data.subcategory) {
       partialEntity.subcategory = await this.subcategoryRepository
-        .findOneOrFail(subcategory)
+        .findOneOrFail(data.subcategory)
         .catch(() => {
-          throw new NotFoundException('Subcategory not found');
+          const msg = `Subcategory ${data.subcategory} not found`;
+          this.#logger.log(msg);
+          throw new NotFoundException(msg);
         });
     }
 
     const movementEntity = await this.movementRepository
       .save(partialEntity)
       .catch((e) => {
+        this.#logger.log(`Error updating movement: ${e.message}`);
         throw new InternalServerErrorException(e.message);
       });
 
-    this.eventEmitter.emit(MovementEvents.UPDATE, movementEntity);
+    this.#logger.log(`Movement ${movementEntity.id} updated`);
 
     return movementEntity;
   }
 
+  /**
+   * It deletes a movement from the database
+   * @param {number} id - number - The id of the movement to delete
+   * @returns A promise that resolves to an object with a message property.
+   */
   async remove(id: number): Promise<Record<string, string>> {
     const result = await this.movementRepository.delete(id).catch((e) => {
+      this.#logger.log(`Error deleting movement: ${e.message}`);
       throw new InternalServerErrorException(e.message);
     });
 
     if (!result.affected) {
-      throw new NotFoundException('Movement not found');
+      const msg = `Movement ${id} not found`;
+      this.#logger.log(msg);
+      throw new NotFoundException(msg);
     }
+
+    this.#logger.log(`Movement ${id} deleted`);
 
     return {
       message: 'Movement deleted successfully',
     };
-  }
-
-  // TODO: move to find method
-  findByCategory(category: number): Promise<MovementEntity[]> {
-    return this.movementRepository.find({ category: { id: category } });
-  }
-
-  findBySubcategory(subcategory: number): Promise<MovementEntity[]> {
-    return this.movementRepository.find({ subcategory: { id: subcategory } });
   }
 
   async removeAll(): Promise<Record<string, string>> {
@@ -206,6 +233,11 @@ export class MovementService {
     };
   }
 
+  /**
+   * It takes an array of movements and returns an array of grouped movements
+   * @param {MovementEntity[]} movements - MovementEntity[]
+   * @returns An array of GroupMovementDto
+   */
   static groupMovements(movements: MovementEntity[]): GroupMovementDto[] {
     const groupedByDay = movements.reduce((map, curr) => {
       if (!map.has(curr.date)) {

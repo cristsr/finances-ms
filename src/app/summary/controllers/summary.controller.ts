@@ -12,4 +12,19 @@ export class SummaryController {
   summary() {
     return this.summaryService.summary();
   }
+
+  @Get('balance')
+  balance() {
+    return this.summaryService.balance();
+  }
+
+  @Get('expenses')
+  expenses() {
+    return this.summaryService.expenses();
+  }
+
+  @Get('last-movements')
+  lastMovements() {
+    return this.summaryService.lastMovements();
+  }
 }

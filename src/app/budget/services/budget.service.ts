@@ -1,46 +1,48 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { UpdateBudgetDto, CreateBudgetDto, BudgetDto } from 'app/budget/dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BudgetEntity } from 'app/budget/entities';
 import { Between, Repository } from 'typeorm';
 import { DateTime } from 'luxon';
+import { UpdateBudget, CreateBudget, BudgetDto } from 'app/budget/dto';
+import { MovementDto } from 'app/movement/dto';
+import { BudgetEntity } from 'app/budget/entities';
 import { CategoryEntity } from 'app/category/entities';
 import { MovementEntity } from 'app/movement/entities';
-// TODO short import
-import { MovementService } from 'app/movement/services/movement.service';
-import { GroupMovementDto } from 'app/movement/dto';
 
 @Injectable()
 export class BudgetService {
+  #logger = new Logger(BudgetService.name);
+
   constructor(
     @InjectRepository(BudgetEntity)
     private budgetRepository: Repository<BudgetEntity>,
-
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
-
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>,
   ) {}
 
-  async create(createBudgetDto: CreateBudgetDto): Promise<BudgetEntity> {
+  async create(data: CreateBudget): Promise<BudgetDto> {
+    this.#logger.log(`Creating budget ${data.name}`);
+
     const utc = DateTime.utc();
     const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
     const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
 
-    const categoryEntity = await this.categoryRepository
-      .findOneOrFail(createBudgetDto.category)
-      .catch(() => {
-        throw new NotFoundException('Category not found');
-      });
+    const categoryEntity = await this.categoryRepository.findOne(data.category);
 
-    return this.budgetRepository
+    if (!categoryEntity) {
+      this.#logger.log(`Category ${data.category} not found`);
+      throw new NotFoundException('Category not found');
+    }
+
+    const budget = await this.budgetRepository
       .save({
-        ...createBudgetDto,
+        ...data,
         startDate,
         endDate,
         category: categoryEntity,
@@ -48,24 +50,32 @@ export class BudgetService {
       .catch((error) => {
         throw new InternalServerErrorException(error.message);
       });
+
+    this.#logger.log(`Budget ${budget.name} created`);
+
+    return {
+      ...budget,
+      spent: 0,
+      percentage: 0,
+    };
   }
 
   async findAll(): Promise<BudgetDto[]> {
+    this.#logger.log('Fetching budgets');
+
     const budgets = await this.budgetRepository
       .find({
         relations: ['category'],
-        where: {
-          active: true,
-        },
+        where: { active: true },
       })
       .catch((e) => {
         throw new InternalServerErrorException(e.message);
       });
 
-    const result = [];
+    const result: BudgetDto[] = [];
 
     for (const budget of budgets) {
-      const { spent } = await this.movementRepository
+      const spent = await this.movementRepository
         .createQueryBuilder()
         .select('sum(amount)', 'spent')
         .where({
@@ -73,53 +83,75 @@ export class BudgetService {
           date: Between(budget.startDate, budget.endDate),
         })
         .getRawOne()
-        .catch(() => ({ spent: 0 }));
+        .then((result) => +result.spent)
+        .catch(() => 0);
 
       result.push({
         ...budget,
-        spent: Number(spent),
+        spent,
+        percentage: Math.floor((spent / budget.amount) * 100),
       });
     }
+
+    this.#logger.log('Budgets fetched');
 
     return result;
   }
 
-  findOne(id: number): Promise<BudgetEntity> {
-    return this.budgetRepository
+  async findOne(id: number): Promise<BudgetDto> {
+    const budget = await this.budgetRepository
       .findOneOrFail(id, { relations: ['category'] })
       .catch(() => {
         throw new NotFoundException('Budget not found');
       });
+
+    const spent = await this.movementRepository
+      .createQueryBuilder()
+      .select('sum(amount)', 'spent')
+      .where({
+        category: budget.category.id,
+        date: Between(budget.startDate, budget.endDate),
+      })
+      .getRawOne()
+      .then((result) => +result.spent)
+      .catch(() => 0);
+
+    return {
+      ...budget,
+      spent,
+      percentage: Math.floor((spent / budget.amount) * 100),
+    };
   }
 
-  update(id: number, updateBudgetDto: UpdateBudgetDto) {
-    const updateObject: any = {};
-
-    if (updateBudgetDto.amount) {
-      updateObject.amount = updateBudgetDto.amount;
-    }
-
-    if (updateBudgetDto.category) {
-      updateObject.category = {
-        id: updateBudgetDto.category,
-      };
-    }
-
-    return this.budgetRepository.update(id, updateObject);
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} budget`;
-  }
-
-  async getBudgetMovements(budgetId: number): Promise<GroupMovementDto[]> {
-    const budget = await this.budgetRepository
-      .findOneOrFail(budgetId, { relations: ['category'] })
+  async update(id: number, data: UpdateBudget): Promise<BudgetDto> {
+    const category = await this.categoryRepository
+      .findOneOrFail(data.category)
       .catch(() => {
-        throw new NotFoundException('Budget not found');
+        throw new NotFoundException('Category not found');
       });
 
-    const movements = await this.movementRepository
+    await this.budgetRepository.update(id, {
+      ...data,
+      category,
+    });
+
+    return this.findOne(id);
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.budgetRepository.delete(id);
+  }
+
+  async getBudgetMovements(budgetId: number): Promise<MovementDto[]> {
+    const budget = await this.budgetRepository.findOne(budgetId, {
+      relations: ['category'],
+    });
+
+    if (!budget) {
+      throw new NotFoundException('Budget not found');
+    }
+
+    return await this.movementRepository
       .find({
         relations: ['category', 'subcategory'],
         where: {
@@ -134,7 +166,45 @@ export class BudgetService {
       .catch((e) => {
         throw new InternalServerErrorException(e.message);
       });
+  }
 
-    return MovementService.groupMovements(movements);
+  async generateBudgets(): Promise<void> {
+    this.#logger.log('Generating budgets');
+
+    const budgets = await this.budgetRepository.find({
+      where: {
+        active: true,
+        repeat: true,
+      },
+    });
+
+    const utc = DateTime.utc();
+    const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
+    const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
+
+    this.#logger.log(`Generating budgets for ${startDate} to ${endDate}`);
+
+    for (const budget of budgets) {
+      // Create Budget for the month
+      await this.budgetRepository
+        .save({
+          name: budget.name,
+          amount: budget.amount,
+          category: budget.category,
+          repeat: budget.repeat,
+          startDate,
+          endDate,
+        })
+        .catch((error) => {
+          this.#logger.error(`Error creating budget ${error.message}`);
+        });
+
+      // Set current month as inactive
+      await this.budgetRepository.update(budget.id, {
+        active: false,
+      });
+    }
+
+    this.#logger.log('Budgets generated');
   }
 }

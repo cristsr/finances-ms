@@ -13,7 +13,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MovementService } from 'app/movement/services';
 import {
   CreateMovementDto,
-  GroupMovementDto,
+  MovementDto,
   MovementQueryDto,
   UpdateMovementDto,
 } from 'app/movement/dto';
@@ -34,7 +34,7 @@ export class MovementController {
 
   @ApiOperation({ summary: 'Get all movements' })
   @Get()
-  findAll(@Query() params: MovementQueryDto): Promise<GroupMovementDto[]> {
+  findAll(@Query() params: MovementQueryDto): Promise<MovementDto[]> {
     return this.movementService.findAll(params);
   }
 
@@ -63,15 +63,5 @@ export class MovementController {
   @Delete()
   removeAll() {
     return this.movementService.removeAll();
-  }
-
-  @Get('/category/:id')
-  findByCategory(@Param('id', ParseIntPipe) category: number) {
-    return this.movementService.findByCategory(category);
-  }
-
-  @Get('/subcategory/:id')
-  findBySubcategory(@Param('id', ParseIntPipe) subcategory: number) {
-    return this.movementService.findBySubcategory(subcategory);
   }
 }

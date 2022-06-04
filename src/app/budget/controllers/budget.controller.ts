@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { BudgetService } from 'app/budget/services';
-import { CreateBudgetDto, UpdateBudgetDto } from 'app/budget/dto';
+import { CreateBudget, UpdateBudget } from 'app/budget/dto';
 
 @Controller({
   path: 'budgets',
@@ -19,7 +19,7 @@ export class BudgetController {
   constructor(private readonly budgetService: BudgetService) {}
 
   @Post()
-  create(@Body() createBudgetDto: CreateBudgetDto) {
+  create(@Body() createBudgetDto: CreateBudget) {
     return this.budgetService.create(createBudgetDto);
   }
 
@@ -34,7 +34,7 @@ export class BudgetController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBudgetDto: UpdateBudgetDto) {
+  update(@Param('id') id: string, @Body() updateBudgetDto: UpdateBudget) {
     return this.budgetService.update(+id, updateBudgetDto);
   }
 

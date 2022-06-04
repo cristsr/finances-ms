@@ -4,7 +4,7 @@ import { ViewEntity, ViewColumn } from 'typeorm';
   name: 'balance',
   expression: `
     select 
-      cast(income - expense as real) as balance, 
+      cast(coalesce(income - expense, 0) as real) as balance, 
       cast(income_month as real), 
       cast(expense_month as real), 
       cast(income_year as real), 
