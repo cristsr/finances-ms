@@ -10,7 +10,7 @@ import { ViewColumn, ViewEntity } from 'typeorm';
       c.color,
       c.icon,
       m.date
-    from movements m left join categories c on m.category_id = c.id
+    from movements m left join categories c on m.category_id = c.id where m.type = 'expense'
   `,
 })
 export class SummaryEntity {
