@@ -1,4 +1,5 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsNumber } from 'class-validator';
+import { CategoryDto } from 'app/category/dto';
 
 export class SummaryDto {
   @IsNumber()
@@ -15,15 +16,16 @@ export class ExpenseDto {
   @IsNumber()
   amount: number;
 
-  @IsString()
-  name: string;
-
-  @IsString()
-  color: string;
-
-  @IsString()
-  icon: string;
-
   @IsNumber()
   percentage: number;
+
+  category: CategoryDto;
+}
+
+export class ExpensesDto {
+  day: ExpenseDto[];
+
+  week: ExpenseDto[];
+
+  month: ExpenseDto[];
 }

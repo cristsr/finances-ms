@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 import { Period, periods } from 'app/movement/types';
 import { Transform } from 'class-transformer';
@@ -17,10 +18,10 @@ export class MovementQueryDto {
   @IsString()
   date: string;
 
-  @Transform(({ value }) => +value)
-  @IsOptional()
+  @ValidateIf((o) => !!o.category)
+  @Transform(({ value }) => value && +value)
   @IsNumber()
-  category: number;
+  category?: number | null;
 
   @IsOptional()
   @Transform(({ value }) => [...new Set(value.split(','))])

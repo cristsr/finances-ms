@@ -8,18 +8,17 @@ import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { MovementEntity } from 'app/movement/entities';
 import { BalanceEntity, SummaryEntity } from 'app/summary/entities';
+import { ExpenseDto, ExpensesDto } from 'app/summary/dto';
 
 @Injectable()
 export class SummaryService {
-  private logger = new Logger(SummaryService.name);
+  #logger = new Logger(SummaryService.name);
 
   constructor(
     @InjectRepository(BalanceEntity)
     private balanceRepository: Repository<BalanceEntity>,
-
     @InjectRepository(SummaryEntity)
     private summaryRepository: Repository<SummaryEntity>,
-
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>,
   ) {}
@@ -33,7 +32,6 @@ export class SummaryService {
       balance,
       expenses,
       lastMovements,
-      // bar,
     };
   }
 
@@ -41,61 +39,62 @@ export class SummaryService {
     return this.balanceRepository.findOne();
   }
 
-  async expenses(): Promise<any> {
+  async expenses(): Promise<ExpensesDto> {
     try {
-      const mapSummary = (data: any[]) => {
-        const total = data.reduce((acc, cur) => acc + cur.amount, 0);
+      let where: string;
+      const local = DateTime.local();
+      const today = local.toSQLDate();
+      const start = local.startOf('week').toSQLDate();
+      const end = local.endOf('week').toSQLDate();
 
-        return data.map((item) => ({
-          amount: item.amount,
-          name: item.name,
-          color: item.color,
-          icon: item.icon,
-          percentage: Math.round((item.amount / total) * 100),
-        }));
-      };
+      where = `m.date = '${today}'`;
+      const day = await this.expensesQuery(where);
 
-      const daily = await this.summaryRepository
-        .createQueryBuilder()
-        .select('SUM(amount)::float as amount, name, color, icon')
-        .where('date = current_date')
-        .groupBy('name, color, icon')
-        .orderBy('amount', 'DESC')
-        .take(5)
-        .getRawMany()
-        .then(mapSummary);
+      where = `date BETWEEN '${start}'::date AND '${end}'::date`;
+      const week = await this.expensesQuery(where);
 
-      const weekly = await this.summaryRepository
-        .createQueryBuilder()
-        .select('SUM(amount)::float as amount, name, color, icon')
-        .where(
-          `to_char(date, 'YYYY-MM-W') = to_char(current_date, 'YYYY-MM-W')`,
-        )
-        .groupBy('name, color, icon')
-        .orderBy('amount', 'DESC')
-        .take(5)
-        .getRawMany()
-        .then(mapSummary);
-
-      const monthly = await this.summaryRepository
-        .createQueryBuilder()
-        .select('SUM(amount)::float as amount, name, color, icon')
-        .where(`to_char(date, 'YYYY-MM') = to_char(current_date, 'YYYY-MM')`)
-        .groupBy('name, color, icon')
-        .orderBy('amount', 'DESC')
-        .take(5)
-        .getRawMany()
-        .then(mapSummary);
+      where = `to_char(m.date, 'YYYY-MM') = to_char('${today}'::date, 'YYYY-MM')`;
+      const month = await this.expensesQuery(where);
 
       return {
-        daily,
-        weekly,
-        monthly,
+        day,
+        week,
+        month,
       };
     } catch (e) {
-      this.logger.error(`Error generating pie stats: ${e.message}`);
+      this.#logger.error(`Error generating pie stats: ${e.message}`);
+      console.error(e);
       throw new UnprocessableEntityException(e.message);
     }
+  }
+
+  expensesQuery(where: string): Promise<ExpenseDto[]> {
+    const query = this.movementRepository
+      .createQueryBuilder('m')
+      .select('SUM(m.amount)::float', 'amount')
+      .innerJoinAndSelect('m.category', 'c')
+      .where(where)
+      .andWhere(`m.type = 'expense'`)
+      .groupBy('c.id, c.name, c.color, c.icon')
+      .orderBy('amount', 'DESC')
+      .limit(5);
+
+    this.#logger.log(query.getQuery());
+
+    return query.getRawMany().then((data) => {
+      const total = data.reduce((acc, cur) => acc + cur.amount, 0);
+
+      return data.map<ExpenseDto>((item) => ({
+        amount: item.amount,
+        percentage: Math.round((item.amount / total) * 100),
+        category: {
+          id: item.c_id,
+          name: item.c_name,
+          color: item.c_color,
+          icon: item.c_icon,
+        },
+      }));
+    });
   }
 
   lastMovements(): Promise<MovementEntity[]> {
@@ -108,10 +107,8 @@ export class SummaryService {
     });
   }
 
-  /**
-   * @Deprecated
-   */
-  private async generateExpensesByWeek(): Promise<any> {
+  // TODO: reimplement
+  async generateExpensesByWeek(): Promise<any> {
     const today = DateTime.local();
 
     const days = new Array(7).fill(0).map((_, i: number) => ({
@@ -135,7 +132,7 @@ export class SummaryService {
           amount: record?.amount ?? 0,
         });
       } catch (e) {
-        this.logger.error(`Error generating bar stats: ${e.message}`);
+        this.#logger.error(`Error generating bar stats: ${e.message}`);
 
         result.push({
           day: day.locale,
