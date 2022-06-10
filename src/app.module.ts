@@ -5,8 +5,6 @@ import { validate } from 'src/environment/utils';
 import { AppController } from './app.controller';
 import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
-import { AutomapperModule } from '@automapper/nestjs';
-import { classes } from '@automapper/classes';
 import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
 import { BillModule } from 'app/bill/bill.module';
@@ -16,10 +14,6 @@ import { BillModule } from 'app/bill/bill.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validate: validate,
-    }),
-    AutomapperModule.forRoot({
-      options: [{ name: 'mapper', pluginInitializer: classes }],
-      singular: true,
     }),
     CacheModule.register(),
     DatabaseModule,
