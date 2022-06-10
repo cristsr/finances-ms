@@ -4,9 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectMapper } from '@automapper/nestjs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Mapper } from '@automapper/core';
 import { Between, In, Raw, Repository } from 'typeorm';
 import { DateTime, Interval } from 'luxon';
 import { MovementEntity } from 'app/movement/entities';
@@ -32,8 +30,6 @@ export class MovementService {
 
     @InjectRepository(SubcategoryEntity)
     private subcategoryRepository: Repository<SubcategoryEntity>,
-
-    @InjectMapper() private mapper: Mapper,
   ) {}
 
   /**
