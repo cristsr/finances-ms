@@ -8,6 +8,7 @@ import { MovementModule } from 'app/movement/movement.module';
 import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
 import { BillModule } from 'app/bill/bill.module';
+import { ScheduledModule } from 'app/scheduled/scheduled.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { BillModule } from 'app/bill/bill.module';
     SummaryModule,
     BudgetModule,
     BillModule,
+    ScheduledModule,
   ],
   controllers: [AppController],
   providers: [],
