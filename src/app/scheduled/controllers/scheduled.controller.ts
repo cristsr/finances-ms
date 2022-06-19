@@ -10,7 +10,10 @@ import {
 import { ScheduledService } from 'app/scheduled/services';
 import { CreateScheduled } from 'app/scheduled/dto';
 
-@Controller('scheduled')
+@Controller({
+  path: 'scheduled',
+  version: '1',
+})
 export class ScheduledController {
   constructor(private readonly scheduledService: ScheduledService) {}
 
