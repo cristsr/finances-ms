@@ -55,7 +55,7 @@ export class ScheduledService {
   findAll() {
     this.#logger.log('Find all scheduled');
     return this.scheduledRepository.find({
-      relations: ['category'],
+      relations: ['category', 'subcategory'],
       where: {
         date: DateTime.local().toSQLDate(),
       },
