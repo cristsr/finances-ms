@@ -1,15 +1,25 @@
-import { IsBoolean, IsDateString, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsIn, IsNumber, IsString } from 'class-validator';
+import { MovementType } from 'app/movement/types';
 
 export class CreateScheduled {
-  @IsString()
-  name: string;
-
-  @IsNumber()
-  category: number;
+  @IsIn(['income', 'outcome'])
+  type: MovementType;
 
   @IsDateString()
   date: string;
 
-  @IsBoolean()
-  repeat: boolean;
+  @IsString()
+  description: string;
+
+  @IsNumber()
+  amount: number;
+
+  @IsString()
+  recurrent: string;
+
+  @IsNumber()
+  category: number;
+
+  @IsNumber()
+  subcategory: number;
 }

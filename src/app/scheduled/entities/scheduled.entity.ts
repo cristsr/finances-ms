@@ -5,7 +5,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CategoryEntity } from 'app/category/entities';
+import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
+import { MovementType } from 'app/movement/types';
 
 @Entity('scheduled')
 export class ScheduledEntity {
@@ -13,10 +14,7 @@ export class ScheduledEntity {
   id: number;
 
   @Column()
-  name: string;
-
-  @Column()
-  amount: number;
+  type: MovementType;
 
   @Column({
     type: 'date',
@@ -25,7 +23,13 @@ export class ScheduledEntity {
   date: string;
 
   @Column()
-  repeat: boolean;
+  description: string;
+
+  @Column()
+  amount: number;
+
+  @Column({})
+  recurrent: string;
 
   @ManyToOne(() => CategoryEntity, (e) => e.id, {
     onDelete: 'SET NULL',
@@ -34,4 +38,12 @@ export class ScheduledEntity {
     name: 'category_id',
   })
   category: CategoryEntity;
+
+  @ManyToOne(() => SubcategoryEntity, (t: SubcategoryEntity) => t.id, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({
+    name: 'subcategory_id',
+  })
+  subcategory: SubcategoryEntity;
 }

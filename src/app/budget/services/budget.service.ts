@@ -20,8 +20,10 @@ export class BudgetService {
   constructor(
     @InjectRepository(BudgetEntity)
     private budgetRepository: Repository<BudgetEntity>,
+
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
+
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>,
   ) {}
