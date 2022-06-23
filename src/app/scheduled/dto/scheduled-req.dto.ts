@@ -1,8 +1,8 @@
 import { IsDateString, IsIn, IsNumber, IsString } from 'class-validator';
-import { MovementType } from 'app/movement/types';
+import { MovementType, movementTypes } from 'app/movement/types';
 
 export class CreateScheduled {
-  @IsIn(['income', 'outcome'])
+  @IsIn(movementTypes)
   type: MovementType;
 
   @IsDateString()
