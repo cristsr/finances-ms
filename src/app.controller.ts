@@ -12,7 +12,7 @@ export class AppController implements OnModuleInit {
   private readonly logger = new Logger(AppController.name);
 
   onModuleInit() {
-    setTimeout(() => {
+    setInterval(() => {
       this.logger.log('Heartbeat');
     }, 10000);
   }
