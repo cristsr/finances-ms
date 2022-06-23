@@ -4,7 +4,7 @@ import { CreateScheduled, ScheduledRes } from 'app/scheduled/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ScheduledEntity } from 'app/scheduled/entities';
 import { Repository } from 'typeorm';
-import { CategoryEntity } from 'app/category/entities';
+import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import { DateTime } from 'luxon';
 
 @Injectable()
@@ -15,12 +15,15 @@ export class ScheduledService {
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
 
+    @InjectRepository(SubcategoryEntity)
+    private subcategoryRepository: Repository<SubcategoryEntity>,
+
     @InjectRepository(ScheduledEntity)
     private scheduledRepository: Repository<ScheduledEntity>,
   ) {}
 
   async create(data: CreateScheduled) {
-    this.#logger.log(`Creating scheduled ${data.name}`);
+    this.#logger.log(`Creating scheduled ${data.description}`);
 
     const category = await this.categoryRepository
       .findOneOrFail(data.category)
@@ -30,12 +33,21 @@ export class ScheduledService {
         throw new NotFoundException(msg);
       });
 
+    const subcategory = await this.subcategoryRepository
+      .findOneOrFail(data.subcategory)
+      .catch(() => {
+        const msg = `Subcategory ${data.subcategory} not found`;
+        this.#logger.log(msg);
+        throw new NotFoundException(msg);
+      });
+
     const scheduled = await this.scheduledRepository.save({
       ...data,
       category,
+      subcategory,
     });
 
-    this.#logger.log(`Scheduled ${scheduled.name} created`);
+    this.#logger.log(`Scheduled ${scheduled.description} created`);
 
     return scheduled;
   }
