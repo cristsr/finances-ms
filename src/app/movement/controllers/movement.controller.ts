@@ -32,6 +32,10 @@ export class MovementController {
     return this.movementService.create(createMovementDto);
   }
 
+  /**
+   * Todo: Replace finAll to post request to allow nested objects
+   * @param params
+   */
   @ApiOperation({ summary: 'Get all movements' })
   @Get()
   findAll(@Query() params: MovementQueryDto): Promise<MovementDto[]> {
