@@ -5,9 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ScheduledEntity } from 'app/scheduled/entities';
 import { Repository } from 'typeorm';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
-import { DateTime } from 'luxon';
+// import { DateTime } from 'luxon';
 
-//
 @Injectable()
 export class ScheduledService {
   #logger = new Logger(ScheduledService.name);
@@ -57,9 +56,9 @@ export class ScheduledService {
     this.#logger.log('Find all scheduled');
     return this.scheduledRepository.find({
       relations: ['category', 'subcategory'],
-      where: {
-        date: DateTime.local().toSQLDate(),
-      },
+      // where: {
+      //   date: DateTime.local().toSQLDate(),
+      // },
     });
   }
 
