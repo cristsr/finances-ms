@@ -80,8 +80,6 @@ export class SummaryService {
       .orderBy('amount', 'DESC')
       .limit(5);
 
-    this.#logger.log(query.getQuery());
-
     return query.getRawMany().then((data) => {
       const total = data.reduce((acc, cur) => acc + cur.amount, 0);
 
