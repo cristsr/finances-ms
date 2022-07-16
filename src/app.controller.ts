@@ -1,21 +1,8 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Logger,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 
 @Controller('health')
-export class AppController implements OnModuleInit {
+export class AppController {
   private readonly logger = new Logger(AppController.name);
-
-  onModuleInit() {
-    setInterval(() => {
-      this.logger.log('Heartbeat');
-    }, 10000);
-  }
 
   @Get()
   @HttpCode(HttpStatus.ACCEPTED)
