@@ -25,6 +25,7 @@ export class SummaryService {
 
   async summary(): Promise<Record<string, any>> {
     const balance = await this.balanceRepository.findOne();
+
     const expenses = await this.expenses();
     const lastMovements = await this.lastMovements();
 

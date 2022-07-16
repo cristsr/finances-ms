@@ -9,6 +9,8 @@ import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
 import { BillModule } from 'app/bill/bill.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
+import { APP_FILTER } from '@nestjs/core';
+import { TypeormFilter } from 'core/filters';
 
 @Module({
   imports: [
@@ -26,6 +28,11 @@ import { ScheduledModule } from 'app/scheduled/scheduled.module';
     ScheduledModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: TypeormFilter,
+    },
+  ],
 })
 export class AppModule {}
