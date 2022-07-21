@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { TypeORMError } from 'typeorm';
@@ -14,14 +15,14 @@ export class TypeormFilter implements ExceptionFilter {
   #logger = new Logger(TypeormFilter.name);
 
   catch(exception: TypeORMError, host: ArgumentsHost) {
-    this.#logger.error(exception.message);
+    this.#logger.error(`${exception.name}: ${exception.message}`);
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    // const message = exception.message;
-
     const errorMap = {
       EntityNotFoundError: new NotFoundException(),
+      QueryFailedError: new UnprocessableEntityException(),
       Default: new InternalServerErrorException(),
     };
 

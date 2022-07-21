@@ -6,7 +6,7 @@ import { BudgetService } from 'app/budget/services';
 export class BudgetSchedule {
   constructor(private budgetService: BudgetService) {}
 
-  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT, {
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_NOON, {
     timeZone: 'America/Bogota',
   })
   async createBudgets() {

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
@@ -17,56 +13,39 @@ export class SummaryService {
   constructor(
     @InjectRepository(BalanceEntity)
     private balanceRepository: Repository<BalanceEntity>,
+
     @InjectRepository(SummaryEntity)
     private summaryRepository: Repository<SummaryEntity>,
+
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>,
   ) {}
-
-  async summary(): Promise<Record<string, any>> {
-    const balance = await this.balanceRepository.findOne();
-
-    const expenses = await this.expenses();
-    const lastMovements = await this.lastMovements();
-
-    return {
-      balance,
-      expenses,
-      lastMovements,
-    };
-  }
 
   balance(): Promise<BalanceEntity> {
     return this.balanceRepository.findOne();
   }
 
-  async expenses(): Promise<ExpensesDto> {
-    try {
-      let where: string;
-      const local = DateTime.local();
-      const today = local.toSQLDate();
-      const start = local.startOf('week').toSQLDate();
-      const end = local.endOf('week').toSQLDate();
+  async expenses(date: DateTime): Promise<ExpensesDto> {
+    let where: string;
 
-      where = `m.date = '${today}'`;
-      const day = await this.expensesQuery(where);
+    const today = date.toSQLDate();
+    const start = date.startOf('week').toSQLDate();
+    const end = date.endOf('week').toSQLDate();
 
-      where = `date BETWEEN '${start}'::date AND '${end}'::date`;
-      const week = await this.expensesQuery(where);
+    where = `m.date = '${today}'`;
+    const day = await this.expensesQuery(where);
 
-      where = `to_char(m.date, 'YYYY-MM') = to_char('${today}'::date, 'YYYY-MM')`;
-      const month = await this.expensesQuery(where);
+    where = `date BETWEEN '${start}'::date AND '${end}'::date`;
+    const week = await this.expensesQuery(where);
 
-      return {
-        day,
-        week,
-        month,
-      };
-    } catch (e) {
-      this.#logger.error(`Error generating pie stats: ${e.message}`);
-      console.error(e);
-      throw new UnprocessableEntityException(e.message);
-    }
+    where = `to_char(m.date, 'YYYY-MM') = to_char('${today}'::date, 'YYYY-MM')`;
+    const month = await this.expensesQuery(where);
+
+    return {
+      day,
+      week,
+      month,
+    };
   }
 
   expensesQuery(where: string): Promise<ExpenseDto[]> {

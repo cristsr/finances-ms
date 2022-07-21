@@ -15,7 +15,7 @@ import { CreateScheduled } from 'app/scheduled/dto';
   version: '1',
 })
 export class ScheduledController {
-  constructor(private readonly scheduledService: ScheduledService) {}
+  constructor(private scheduledService: ScheduledService) {}
 
   @Post()
   create(@Body() data: CreateScheduled) {

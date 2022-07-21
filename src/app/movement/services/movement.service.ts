@@ -61,12 +61,11 @@ export class MovementService {
       throw new NotFoundException(msg);
     }
 
-    const movement = await this.movementRepository
-      .save({ ...data, category, subcategory })
-      .catch((e) => {
-        this.#logger.log(`Error creating movement: ${e.detail}`);
-        throw new InternalServerErrorException(e.detail);
-      });
+    const movement = await this.movementRepository.save({
+      ...data,
+      category,
+      subcategory,
+    });
 
     this.#logger.log(`Movement ${movement.id} created`);
 
@@ -124,17 +123,11 @@ export class MovementService {
     }
 
     // Execute query
-    return await this.movementRepository
-      .find({
-        relations: ['category', 'subcategory'],
-        where,
-        order: { date: 'DESC', createdAt: 'DESC' },
-      })
-      .catch((e) => {
-        const msg = `Error finding movements: ${e.message}`;
-        this.#logger.log(msg);
-        throw new InternalServerErrorException(msg);
-      });
+    return await this.movementRepository.find({
+      relations: ['category', 'subcategory'],
+      where,
+      order: { date: 'DESC', createdAt: 'DESC' },
+    });
   }
 
   /**
@@ -227,28 +220,5 @@ export class MovementService {
     return {
       message: 'All movements deleted successfully',
     };
-  }
-
-  /**
-   * It takes an array of movements and returns an array of grouped movements
-   * @param {MovementEntity[]} movements - MovementEntity[]
-   * @returns An array of GroupMovementDto
-   */
-  static groupMovements(movements: MovementEntity[]): GroupMovementDto[] {
-    const groupedByDay = movements.reduce((map, curr) => {
-      if (!map.has(curr.date)) {
-        map.set(curr.date, []);
-      }
-
-      map.get(curr.date).push(curr);
-
-      return map;
-    }, new Map<string, Array<MovementDto>>());
-
-    return [...groupedByDay.entries()].map(([date, values]) => ({
-      date,
-      accumulated: values.reduce((acc: number, { amount }) => acc + amount, 0),
-      values,
-    }));
   }
 }

@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ScheduledEntity } from 'app/scheduled/entities';
 import { Repository } from 'typeorm';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
-// import { DateTime } from 'luxon';
 
 @Injectable()
 export class ScheduledService {

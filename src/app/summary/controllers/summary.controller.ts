@@ -1,6 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { SummaryService } from 'app/summary/services';
+import { ApiTags } from '@nestjs/swagger';
+import { ClientDate } from 'core/decorators';
+import { DateTime } from 'luxon';
 
+@ApiTags('Summary')
 @Controller({
   path: 'summary',
   version: '1',
@@ -8,19 +12,14 @@ import { SummaryService } from 'app/summary/services';
 export class SummaryController {
   constructor(private readonly summaryService: SummaryService) {}
 
-  @Get()
-  summary() {
-    return this.summaryService.summary();
-  }
-
   @Get('balance')
   balance() {
     return this.summaryService.balance();
   }
 
   @Get('expenses')
-  expenses() {
-    return this.summaryService.expenses();
+  expenses(@ClientDate() date: DateTime) {
+    return this.summaryService.expenses(date);
   }
 
   @Get('last-movements')
