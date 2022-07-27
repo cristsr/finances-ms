@@ -10,7 +10,6 @@ import { DateTime, Interval } from 'luxon';
 import { MovementEntity } from 'app/movement/entities';
 import {
   CreateMovementDto,
-  GroupMovementDto,
   MovementDto,
   MovementQueryDto,
   UpdateMovementDto,
